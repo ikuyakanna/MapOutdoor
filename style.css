@@ -20,7 +20,7 @@ html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,
 .subtitle{ font-size: 12px; color:var(--muted); margin-top:4px; }
 
 .main{ height: calc(100% - 56px); position: relative; }
-#map{ height: 100%; width: 100%; }
+#map{ height: 100%; width: 100%; z-index: 1;}
 
 .btn{
   border: none; border-radius: 10px;
