@@ -2,12 +2,11 @@
 // 大江戸線 証アプリ（試作）
 // - 地図: Leaflet + OSM
 // - 保存: localStorage
-// - 写真必須
+// - 写真必須（アルバム/カメラ）
 // ===============================
 
 // まずは「動くこと優先」で数駅だけ入れています。
-// あとで stations 配列に駅を増やすだけでOKです。
-// （大江戸線は38駅）:contentReference[oaicite:1]{index=1}
+// stations 配列に追加すれば駅が増えます。
 const stations = [
   { id: "tochomae", name: "都庁前", lat: 35.6896, lon: 139.6922 },
   { id: "roppongi", name: "六本木", lat: 35.6628, lon: 139.7310 },
@@ -25,8 +24,7 @@ function loadProofs() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
@@ -41,7 +39,6 @@ function proofsByStation(proofs) {
     if (!map.has(p.stationId)) map.set(p.stationId, []);
     map.get(p.stationId).push(p);
   }
-  // 新しい順に並べる
   for (const [k, arr] of map.entries()) {
     arr.sort((a, b) => b.createdAt - a.createdAt);
     map.set(k, arr);
@@ -64,6 +61,7 @@ const addProofBtn = document.getElementById("addProofBtn");
 
 const modal = document.getElementById("modal");
 const closeModalBtn = document.getElementById("closeModalBtn");
+
 const photoInputFile = document.getElementById("photoInputFile");
 const photoInputCamera = document.getElementById("photoInputCamera");
 const commentInput = document.getElementById("commentInput");
@@ -137,7 +135,10 @@ function openModal() {
   formError.classList.add("hidden");
   formError.textContent = "";
 
-  photoInput.value = "";
+  // 2つのinputをクリア
+  photoInputFile.value = "";
+  photoInputCamera.value = "";
+
   commentInput.value = "";
   photoPreview.classList.add("hidden");
   photoPreview.innerHTML = "";
@@ -166,22 +167,9 @@ function fileToDataURL(file) {
   });
 }
 
-// 写真プレビュー
-// photoInput.addEventListener("change", async () => {
-//   const file = photoInput.files?.[0];
-//   if (!file) {
-//     photoPreview.classList.add("hidden");
-//     photoPreview.innerHTML = "";
-//     return;
-//   }
-//   const url = await fileToDataURL(file);
-//   photoPreview.innerHTML = `<img src="${url}" alt="プレビュー">`;
-//   photoPreview.classList.remove("hidden");
-// });
-
-async function handlePhotoChange(input){
+async function handlePhotoChange(input) {
   const file = input.files?.[0];
-  if (!file){
+  if (!file) {
     photoPreview.classList.add("hidden");
     photoPreview.innerHTML = "";
     return;
@@ -199,11 +187,11 @@ saveProofBtn.addEventListener("click", async () => {
   if (!selectedStation) return;
 
   const file =
-  photoInputFile.files?.[0] ||
-  photoInputCamera.files?.[0];
-  
+    photoInputFile.files?.[0] ||
+    photoInputCamera.files?.[0];
+
   if (!file) {
-    setError("写真が必須です。写真を選択してください。");
+    setError("写真が必須です。アルバムかカメラで写真を選んでください。");
     return;
   }
 
@@ -216,8 +204,11 @@ saveProofBtn.addEventListener("click", async () => {
   const photoDataUrl = await fileToDataURL(file);
   const comment = commentInput.value ?? "";
 
+  // crypto.randomUUIDがない環境向けフォールバック
+  const id = (crypto?.randomUUID?.() ?? `p_${Date.now()}_${Math.random().toString(16).slice(2)}`);
+
   const newProof = {
-    id: crypto.randomUUID(),
+    id,
     stationId: selectedStation.id,
     createdAt: Date.now(),
     comment,
@@ -229,6 +220,7 @@ saveProofBtn.addEventListener("click", async () => {
   proofsMap = proofsByStation(proofs);
 
   closeModal();
+  renderMarkers();        // 達成表示を更新
   openSheet(selectedStation); // 再描画
 });
 
@@ -255,7 +247,6 @@ function isVisited(stationId) {
 }
 
 function markerIcon(visited) {
-  // Leaflet標準マーカーの色違いが面倒なので、DivIconで簡易表現
   const color = visited ? "var(--ok)" : "var(--accent)";
   const inner = visited ? "✓" : "●";
   return L.divIcon({
@@ -278,7 +269,6 @@ function markerIcon(visited) {
 const markers = new Map();
 
 function renderMarkers() {
-  // 既存を消す
   for (const m of markers.values()) map.removeLayer(m);
   markers.clear();
 
@@ -286,18 +276,15 @@ function renderMarkers() {
     const visited = isVisited(s.id);
     const m = L.marker([s.lat, s.lon], { icon: markerIcon(visited) })
       .addTo(map)
-      .on("click", () => openSheet(s));
+      .on("click", () => {
+        // Tooltipより先にシートを出したいので即open
+        openSheet(s);
+      });
 
+    // TooltipはあってもOK（不要なら削除）
     m.bindTooltip(`${s.name}${visited ? "（達成）" : ""}`, { direction: "top" });
     markers.set(s.id, m);
   }
 }
 
 renderMarkers();
-
-// 証を追加した後にマーカーの達成表示を更新したいので、sheet再描画時に呼ぶ
-const _openSheet = openSheet;
-openSheet = function(station){
-  renderMarkers();
-  _openSheet(station);
-};

@@ -28,11 +28,11 @@
           <div id="stationName" class="sheet__title">駅名</div>
           <div id="stationStatus" class="sheet__status">未達成</div>
         </div>
-        <button id="closeSheetBtn" class="btn btn--ghost">閉じる</button>
+        <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
       </div>
 
       <div class="sheet__actions">
-        <button id="addProofBtn" class="btn btn--primary">証を追加（写真必須）</button>
+        <button id="addProofBtn" class="btn btn--primary" type="button">証を追加（写真必須）</button>
       </div>
 
       <div class="sheet__section">
@@ -44,10 +44,11 @@
     <!-- Modal: add proof -->
     <div id="modal" class="modal hidden" aria-hidden="true">
       <div class="modal__backdrop"></div>
-      <div class="modal__panel">
+
+      <div class="modal__panel" role="dialog" aria-modal="true">
         <div class="modal__header">
           <div class="modal__title">証を追加</div>
-          <button id="closeModalBtn" class="btn btn--ghost">閉じる</button>
+          <button id="closeModalBtn" class="btn btn--ghost" type="button">閉じる</button>
         </div>
 
         <div class="form">
@@ -55,24 +56,27 @@
             <div class="field__label">写真（必須）</div>
 
             <div class="photoButtons">
-                <label class="btn btn--ghost">
-                 📁 アルバムから選ぶ
+              <label class="btn btn--ghost">
+                📁 アルバムから選ぶ
                 <input id="photoInputFile" type="file" accept="image/*" hidden>
-                </label>
+              </label>
 
-                <label class="btn btn--ghost">
+              <label class="btn btn--ghost">
                 📷 カメラで撮る
                 <input id="photoInputCamera" type="file" accept="image/*" capture="environment" hidden>
-                </label>
+              </label>
             </div>
 
             <div id="photoPreview" class="photoPreview hidden"></div>
+          </label>
+
+          <label class="field">
             <div class="field__label">コメント（任意）</div>
             <textarea id="commentInput" rows="3" placeholder="例：ラーメン最高、など"></textarea>
           </label>
 
           <div class="form__row">
-            <button id="saveProofBtn" class="btn btn--primary">保存</button>
+            <button id="saveProofBtn" class="btn btn--primary" type="button">保存</button>
             <div id="formError" class="formError hidden"></div>
           </div>
 

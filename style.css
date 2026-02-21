@@ -11,6 +11,7 @@
 
 *{ box-sizing:border-box; }
 html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif; background:var(--bg); color:var(--text); }
+
 .topbar{
   padding: 12px 14px 10px;
   border-bottom: 1px solid rgba(255,255,255,.08);
@@ -19,8 +20,18 @@ html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,
 .title{ font-weight: 700; font-size: 16px; }
 .subtitle{ font-size: 12px; color:var(--muted); margin-top:4px; }
 
-.main{ height: calc(100% - 56px); position: relative; }
-#map{ height: 100%; width: 100%; z-index: 1;}
+.main{
+  height: calc(100% - 56px);
+  position: relative;
+  z-index: 0;
+}
+
+#map{
+  height: 100%;
+  width: 100%;
+  position: relative;
+  z-index: 1; /* 地図は下 */
+}
 
 .btn{
   border: none; border-radius: 10px;
@@ -33,7 +44,7 @@ html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,
 
 .sheet{
   position: absolute; left: 10px; right: 10px; bottom: 10px;
-  z-index: 1000;
+  z-index: 10000; /* 地図より前 */
   background: rgba(18,26,41,.96);
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 16px;
@@ -42,6 +53,7 @@ html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,
   max-height: 60%;
   overflow: auto;
 }
+
 .hidden{ display:none !important; }
 
 .sheet__handle{
@@ -77,12 +89,14 @@ html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,
 
 .modal{
   position: absolute; inset: 0;
+  z-index: 20000; /* シートよりさらに前 */
   display:flex; align-items:flex-end; justify-content:center;
-  z-index: 2000;
 }
+
 .modal__backdrop{
   position:absolute; inset:0; background: rgba(0,0,0,.55);
 }
+
 .modal__panel{
   position: relative;
   width: min(640px, 100%);
@@ -92,12 +106,14 @@ html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,
   border: 1px solid rgba(255,255,255,.10);
   padding: 12px 14px 18px;
 }
+
 .modal__header{ display:flex; align-items:center; justify-content:space-between; }
 .modal__title{ font-weight: 900; font-size: 16px; }
 
 .field{ display:block; margin-top: 12px; }
 .field__label{ font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-textarea, input[type="file"]{
+
+textarea{
   width: 100%;
   background: rgba(255,255,255,.06);
   color: var(--text);
@@ -105,6 +121,13 @@ textarea, input[type="file"]{
   border-radius: 12px;
   padding: 10px;
 }
+
+.photoButtons{
+  display:flex;
+  gap:10px;
+  flex-wrap: wrap;
+}
+
 .photoPreview{
   margin-top: 10px;
   border-radius: 12px;
@@ -116,8 +139,8 @@ textarea, input[type="file"]{
 .form__row{ margin-top: 14px; display:flex; gap: 10px; align-items:center; }
 .formError{ color: var(--danger); font-size: 12px; font-weight: 700; }
 .hint{ margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.4; }
-.photoButtons{
-  display:flex;
-  gap:10px;
-  flex-wrap: wrap;
+
+/* Leaflet tooltipが上に出すぎないように（任意） */
+.leaflet-tooltip{
+  z-index: 5000;
 }
