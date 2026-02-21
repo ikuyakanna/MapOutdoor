@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>大江戸線 証アプリ（試作）</title>
+
+  <!-- Leaflet (map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">大江戸線｜駅制覇（試作）</div>
+    <div class="subtitle">駅ピンをタップ → 証を残す（写真必須）</div>
+  </header>
+
+  <main class="main">
+    <div id="map"></div>
+
+    <!-- Bottom sheet: station detail -->
+    <section id="sheet" class="sheet hidden" aria-hidden="true">
+      <div class="sheet__handle"></div>
+
+      <div class="sheet__header">
+        <div>
+          <div id="stationName" class="sheet__title">駅名</div>
+          <div id="stationStatus" class="sheet__status">未達成</div>
+        </div>
+        <button id="closeSheetBtn" class="btn btn--ghost">閉じる</button>
+      </div>
+
+      <div class="sheet__actions">
+        <button id="addProofBtn" class="btn btn--primary">証を追加（写真必須）</button>
+      </div>
+
+      <div class="sheet__section">
+        <div class="sheet__sectionTitle">この駅の証</div>
+        <div id="proofList" class="proofList"></div>
+      </div>
+    </section>
+
+    <!-- Modal: add proof -->
+    <div id="modal" class="modal hidden" aria-hidden="true">
+      <div class="modal__backdrop"></div>
+      <div class="modal__panel">
+        <div class="modal__header">
+          <div class="modal__title">証を追加</div>
+          <button id="closeModalBtn" class="btn btn--ghost">閉じる</button>
+        </div>
+
+        <div class="form">
+          <label class="field">
+            <div class="field__label">写真（必須）</div>
+            <input id="photoInput" type="file" accept="image/*" capture="environment" />
+            <div id="photoPreview" class="photoPreview hidden"></div>
+          </label>
+
+          <label class="field">
+            <div class="field__label">コメント（任意）</div>
+            <textarea id="commentInput" rows="3" placeholder="例：ラーメン最高、など"></textarea>
+          </label>
+
+          <div class="form__row">
+            <button id="saveProofBtn" class="btn btn--primary">保存</button>
+            <div id="formError" class="formError hidden"></div>
+          </div>
+
+          <div class="hint">
+            ※ 試作なので保存先はこのブラウザ（localStorage）です。別PC/別ブラウザには引き継がれません。
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
