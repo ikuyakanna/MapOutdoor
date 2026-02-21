@@ -53,11 +53,20 @@
         <div class="form">
           <label class="field">
             <div class="field__label">写真（必須）</div>
-            <input id="photoInput" type="file" accept="image/*" capture="environment" />
-            <div id="photoPreview" class="photoPreview hidden"></div>
-          </label>
 
-          <label class="field">
+            <div class="photoButtons">
+                <label class="btn btn--ghost">
+                 📁 アルバムから選ぶ
+                <input id="photoInputFile" type="file" accept="image/*" hidden>
+                </label>
+
+                <label class="btn btn--ghost">
+                📷 カメラで撮る
+                <input id="photoInputCamera" type="file" accept="image/*" capture="environment" hidden>
+                </label>
+            </div>
+
+            <div id="photoPreview" class="photoPreview hidden"></div>
             <div class="field__label">コメント（任意）</div>
             <textarea id="commentInput" rows="3" placeholder="例：ラーメン最高、など"></textarea>
           </label>

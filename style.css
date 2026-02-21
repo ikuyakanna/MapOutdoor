@@ -116,3 +116,8 @@ textarea, input[type="file"]{
 .form__row{ margin-top: 14px; display:flex; gap: 10px; align-items:center; }
 .formError{ color: var(--danger); font-size: 12px; font-weight: 700; }
 .hint{ margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.photoButtons{
+  display:flex;
+  gap:10px;
+  flex-wrap: wrap;
+}

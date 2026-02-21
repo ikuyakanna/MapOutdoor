@@ -64,7 +64,8 @@ const addProofBtn = document.getElementById("addProofBtn");
 
 const modal = document.getElementById("modal");
 const closeModalBtn = document.getElementById("closeModalBtn");
-const photoInput = document.getElementById("photoInput");
+const photoInputFile = document.getElementById("photoInputFile");
+const photoInputCamera = document.getElementById("photoInputCamera");
 const commentInput = document.getElementById("commentInput");
 const saveProofBtn = document.getElementById("saveProofBtn");
 const formError = document.getElementById("formError");
@@ -166,9 +167,21 @@ function fileToDataURL(file) {
 }
 
 // 写真プレビュー
-photoInput.addEventListener("change", async () => {
-  const file = photoInput.files?.[0];
-  if (!file) {
+// photoInput.addEventListener("change", async () => {
+//   const file = photoInput.files?.[0];
+//   if (!file) {
+//     photoPreview.classList.add("hidden");
+//     photoPreview.innerHTML = "";
+//     return;
+//   }
+//   const url = await fileToDataURL(file);
+//   photoPreview.innerHTML = `<img src="${url}" alt="プレビュー">`;
+//   photoPreview.classList.remove("hidden");
+// });
+
+async function handlePhotoChange(input){
+  const file = input.files?.[0];
+  if (!file){
     photoPreview.classList.add("hidden");
     photoPreview.innerHTML = "";
     return;
@@ -176,13 +189,19 @@ photoInput.addEventListener("change", async () => {
   const url = await fileToDataURL(file);
   photoPreview.innerHTML = `<img src="${url}" alt="プレビュー">`;
   photoPreview.classList.remove("hidden");
-});
+}
+
+photoInputFile.addEventListener("change", () => handlePhotoChange(photoInputFile));
+photoInputCamera.addEventListener("change", () => handlePhotoChange(photoInputCamera));
 
 // 保存
 saveProofBtn.addEventListener("click", async () => {
   if (!selectedStation) return;
 
-  const file = photoInput.files?.[0];
+  const file =
+  photoInputFile.files?.[0] ||
+  photoInputCamera.files?.[0];
+  
   if (!file) {
     setError("写真が必須です。写真を選択してください。");
     return;
