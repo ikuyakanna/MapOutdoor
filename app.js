@@ -6,11 +6,20 @@
 // - 編集モード中：グリッド表示 & グリッド吸着（スナップ）
 // - 路線は環状に閉じない（E-38→E-01は繋がない）
 // - 支線として E-01(新宿西口) → E-28(都庁前) を線で追加
-// - ラベル被り軽減：区間ごとにラベル方向を自動調整
+// - iPhone縦長編集：SVG座標系を 390x844 に合わせる
+// - ラベル被り軽減：区間（駅番号）ごとにラベル方向を自動調整
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
-  // 1) Stations（全38駅）※あなたの配置JSONを反映
+  // 0) Canvas size（iPhone縦長想定）
+  //  - index.html の <svg id="oedoSvg" viewBox="0 0 390 844"> と合わせる
+  // =========================
+  const SVG_W = 390;
+  const SVG_H = 844;
+
+  // =========================
+  // 1) Stations（全38駅）
+  // ※ あなたの最新JSON（横長編集で作った座標）をそのまま入れる
   // =========================
   const stations = [
     { id:"E-01", code:"E-01", name:"新宿西口", x:360, y:480 },
@@ -54,6 +63,39 @@ window.addEventListener("DOMContentLoaded", () => {
   ];
 
   // =========================
+  // 1.5) 横長座標→縦長キャンバスにフィット
+  // - 上の stations は「横長(1000x700くらい)で作った感覚」なので
+  //   iPhone縦長(390x844)に収まるよう縮尺変換する
+  // - すでに 390x844 用に作り直した座標なら false にする
+  // =========================
+  const FIT_TO_PORTRAIT = true;
+
+  if (FIT_TO_PORTRAIT) {
+    // 現在の stations の範囲から自動で縮尺を決める（決め打ちより安全）
+    const xs = stations.map(s => s.x);
+    const ys = stations.map(s => s.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+    const srcW = Math.max(1, maxX - minX);
+    const srcH = Math.max(1, maxY - minY);
+
+    // 縦長キャンバスに収める余白（見た目のため）
+    const MARGIN_X = 26;
+    const MARGIN_Y = 90;
+
+    const dstW = SVG_W - MARGIN_X * 2;
+    const dstH = SVG_H - MARGIN_Y * 2;
+
+    const s = Math.min(dstW / srcW, dstH / srcH);
+
+    stations.forEach((st) => {
+      st.x = Math.round(MARGIN_X + (st.x - minX) * s);
+      st.y = Math.round(MARGIN_Y + (st.y - minY) * s);
+    });
+  }
+
+  // =========================
   // 2) Storage
   // =========================
   const STORAGE_KEY = "oedo_proofs_svg_v1";
@@ -69,7 +111,6 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================
   const svg = document.getElementById("oedoSvg");
 
-  // editor bar
   const toggleEditBtn = document.getElementById("toggleEditBtn");
   const copyJsonBtn = document.getElementById("copyJsonBtn");
   const downloadJsonBtn = document.getElementById("downloadJsonBtn");
@@ -77,7 +118,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const gridToggle = document.getElementById("gridToggle");
   const snapToggle = document.getElementById("snapToggle");
 
-  // sheet
   const sheet = document.getElementById("sheet");
   const stationName = document.getElementById("stationName");
   const stationStatus = document.getElementById("stationStatus");
@@ -85,7 +125,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const closeSheetBtn = document.getElementById("closeSheetBtn");
   const addProofBtn = document.getElementById("addProofBtn");
 
-  // modal
   const modal = document.getElementById("modal");
   const closeModalBtn = document.getElementById("closeModalBtn");
   const photoInputFile = document.getElementById("photoInputFile");
@@ -97,7 +136,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const commentInput = document.getElementById("commentInput");
   const saveProofBtn = document.getElementById("saveProofBtn");
 
-  // 要素チェック
   const required = [
     ["oedoSvg", svg],
     ["toggleEditBtn", toggleEditBtn],
@@ -121,10 +159,6 @@ window.addEventListener("DOMContentLoaded", () => {
   let snapToGrid = true;
   const GRID_SIZE = 20;
   const GRID_BOLD = 100;
-
-  // SVGの固定サイズ（viewBoxと合わせる）
-  const SVG_W = 1000;
-  const SVG_H = 700;
 
   // =========================
   // 5) Helpers
@@ -226,6 +260,7 @@ window.addEventListener("DOMContentLoaded", () => {
       newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
     }
 
+    // 画面外に飛びすぎないように軽く制限
     newX = Math.max(20, Math.min(SVG_W - 20, newX));
     newY = Math.max(20, Math.min(SVG_H - 20, newY));
 
@@ -244,55 +279,33 @@ window.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("pointerup", endDrag);
 
   // =========================
-  // 7) ラベル被り軽減：区間ごとにオフセットを決める
+  // 7) ラベル被り軽減（駅番号で区間判定）
+  //  - E01〜E09: 上段横 → 下に出す
+  //  - E10〜E14: 右縦 → 左に出す
+  //  - E15〜E23: 下段横 → 上に出す
+  //  - E24〜E38: 左縦 → 右に出す
   // =========================
   function labelPlacement(station){
-    // 微調整用：偶数/奇数で少しズラす
     const n = parseInt(station.id.replace("E-", ""), 10);
     const wobble = (n % 2 === 0) ? 6 : -6;
 
-    // 上の横線（y=480）は 下に出す
-    if (station.y === 480 && station.x >= 360 && station.x <= 680) {
-      return {
-        nameDx: wobble, nameDy: 24,
-        codeDx: wobble, codeDy: 38,
-        anchor: "middle"
-      };
+    if (n >= 1 && n <= 9) {
+      // 上段横：下（隣と被りにくい）
+      return { nameDx: wobble, nameDy: 26, codeDx: wobble, codeDy: 42, anchor: "middle" };
     }
 
-    // 右縦（x=680）は 左に出す（外側）
-    if (station.x === 680 && station.y >= 480) {
-      return {
-        nameDx: -18, nameDy: wobble,
-        codeDx: -18, codeDy: 16 + wobble,
-        anchor: "end"
-      };
+    if (n >= 10 && n <= 14) {
+      // 右縦：左
+      return { nameDx: -18, nameDy: wobble, codeDx: -18, codeDy: 16 + wobble, anchor: "end" };
     }
 
-    // 下の横線（y=680）は 上に出す
-    if (station.y === 680) {
-      return {
-        nameDx: wobble, nameDy: -18,
-        codeDx: wobble, codeDy: -34,
-        anchor: "middle"
-      };
+    if (n >= 15 && n <= 23) {
+      // 下段横：上
+      return { nameDx: wobble, nameDy: -18, codeDx: wobble, codeDy: -34, anchor: "middle" };
     }
 
-    // 左縦（x=320）は 右に出す（外側）
-    if (station.x === 320) {
-      return {
-        nameDx: 18, nameDy: wobble,
-        codeDx: 18, codeDy: 16 + wobble,
-        anchor: "start"
-      };
-    }
-
-    // デフォルト（上）
-    return {
-      nameDx: 0, nameDy: -18,
-      codeDx: 0, codeDy: -34,
-      anchor: "middle"
-    };
+    // 左縦：右
+    return { nameDx: 18, nameDy: wobble, codeDx: 18, codeDy: 16 + wobble, anchor: "start" };
   }
 
   // =========================
@@ -327,12 +340,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
     renderGrid();
 
-    // 背景枠
+    // 背景枠（縦長キャンバスに追従）
     const bg = elNS("rect");
     bg.setAttribute("x", "24");
     bg.setAttribute("y", "24");
-    bg.setAttribute("width", "952");
-    bg.setAttribute("height", "652");
+    bg.setAttribute("width", String(SVG_W - 48));
+    bg.setAttribute("height", String(SVG_H - 48));
     bg.setAttribute("rx", "26");
     bg.setAttribute("fill", "rgba(255,255,255,.03)");
     bg.setAttribute("stroke", "rgba(255,255,255,.06)");
@@ -380,7 +393,6 @@ window.addEventListener("DOMContentLoaded", () => {
       inner.setAttribute("fill", "rgba(0,0,0,0)");
       inner.setAttribute("stroke", visited ? "var(--ok)" : "var(--accent)");
 
-      // ラベル配置（被り軽減）
       const place = labelPlacement(s);
 
       const label = elNS("text");
@@ -397,7 +409,6 @@ window.addEventListener("DOMContentLoaded", () => {
       code.setAttribute("class", "stationCode");
       code.textContent = s.code;
 
-      // クリック/ドラッグ
       const onPointerDown = (evt) => {
         if (!editMode) return;
         evt.preventDefault();
