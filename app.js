@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
     {
       id: "oedo",
       name: "都営大江戸線",
-      color: "#b36bff", // 紫
+      color: "#b6007a", // ★マゼンタ（本物寄せ）
       stations: [
         { id:"E-01", code:"E-01", name:"新宿西口", x:140, y:420 },
         { id:"E-02", code:"E-02", name:"東新宿", x:200, y:420 },
@@ -155,6 +155,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const commentInput = document.getElementById("commentInput");
   const saveProofBtn = document.getElementById("saveProofBtn");
 
+  // ★追加：左右2ボタン
+  const pickPhotoBtn = document.getElementById("pickPhotoBtn");
+  const takePhotoBtn = document.getElementById("takePhotoBtn");
+
   if (!svg) {
     alert("HTMLに #oedoSvg が見つかりません。");
     return;
@@ -209,6 +213,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   let dragging = null; // { station, dx, dy }
   let movedDuringDrag = false;
+
+  // ★追加：直前の写真入力元
+  let lastPhotoSource = "file"; // "file" or "camera"
 
   // =========================
   // 7) Helpers
@@ -692,6 +699,7 @@ window.addEventListener("DOMContentLoaded", () => {
     photoPreviewWrap.classList.add("hidden");
     photoPreviewInner.innerHTML = "";
     commentInput.value = "";
+    lastPhotoSource = "file"; // 初期はアルバム側
 
     modal.classList.remove("hidden");
   }
@@ -709,6 +717,17 @@ window.addEventListener("DOMContentLoaded", () => {
   closeModalBtn?.addEventListener("click", closeModal);
   modal?.querySelector(".modal__backdrop")?.addEventListener("click", closeModal);
 
+  // ★追加：左右ボタン → 隠しinputを開く
+  pickPhotoBtn?.addEventListener("click", () => {
+    lastPhotoSource = "file";
+    photoInputFile?.click();
+  });
+
+  takePhotoBtn?.addEventListener("click", () => {
+    lastPhotoSource = "camera";
+    photoInputCamera?.click();
+  });
+
   // photo preview
   function preview(file){
     const reader = new FileReader();
@@ -720,17 +739,21 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   photoInputFile?.addEventListener("change", (e) => {
+    lastPhotoSource = "file";
     const f = e.target.files?.[0];
     if (f) preview(f);
   });
 
   photoInputCamera?.addEventListener("change", (e) => {
+    lastPhotoSource = "camera";
     const f = e.target.files?.[0];
     if (f) preview(f);
   });
 
+  // ★改善：選びなおす → 直前の入口を開く
   reselectBtn?.addEventListener("click", () => {
-    photoInputFile.click();
+    if (lastPhotoSource === "camera") photoInputCamera?.click();
+    else photoInputFile?.click();
   });
 
   clearPhotoBtn?.addEventListener("click", () => {

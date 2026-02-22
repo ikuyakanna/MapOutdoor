@@ -8,7 +8,8 @@
   --ok: #35d07f;
 
   /* 路線カラー（JSで路線選択時に更新） */
-  --line: #b36bff;
+  /* 初期値も大江戸線マゼンタ寄せ */
+  --line: #b6007a;
 }
 
 *{ box-sizing: border-box; }
@@ -357,4 +358,51 @@ body{
   height: auto;
   border-radius: 12px;
   display:block;
+}
+
+/* ===== Photo pick buttons（追加） ===== */
+.fileInputHidden{
+  display:none !important;
+}
+
+.row__controls--photo{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.photoBtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.92);
+
+  font-weight: 900;
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
+}
+
+.photoBtn:active{
+  transform: translateY(1px);
+}
+
+.photoBtn__icon{
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* 撮影ボタンを強調（マゼンタ寄せ） */
+.photoBtn--primary{
+  background: rgba(182,0,122,.22);
+  border-color: rgba(182,0,122,.40);
 }

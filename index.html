@@ -74,9 +74,23 @@
       <div class="modal__body">
         <div class="row">
           <div class="row__label">写真（必須）</div>
-          <div class="row__controls">
-            <input id="photoInputFile" type="file" accept="image/*" />
-            <input id="photoInputCamera" type="file" accept="image/*" capture="environment" />
+
+          <!-- ★ここを左右2ボタンに変更 -->
+          <div class="row__controls row__controls--photo">
+            <!-- 本体inputは隠す -->
+            <input id="photoInputFile" class="fileInputHidden" type="file" accept="image/*" />
+            <input id="photoInputCamera" class="fileInputHidden" type="file" accept="image/*" capture="environment" />
+
+            <!-- 見た目はボタン -->
+            <button id="pickPhotoBtn" class="photoBtn" type="button">
+              <span class="photoBtn__icon" aria-hidden="true">🖼️</span>
+              <span class="photoBtn__text">写真を選択</span>
+            </button>
+
+            <button id="takePhotoBtn" class="photoBtn photoBtn--primary" type="button">
+              <span class="photoBtn__icon" aria-hidden="true">📷</span>
+              <span class="photoBtn__text">写真を撮る</span>
+            </button>
           </div>
         </div>
 
