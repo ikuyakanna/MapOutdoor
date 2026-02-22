@@ -13,6 +13,7 @@
 // - 大江戸線の例外：E-18 築地市場は駅名を左に出す
 // - 大江戸線：E-37/E-38（練馬春日町/光が丘）は左
 // - 丸ノ内線：縦は左右交互、横は上下交互（上下を逆に）＋中野坂上(M-20)は下固定
+// - 駅詳細シート表示中：駅以外（線/背景）タップで閉じる
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
@@ -23,13 +24,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // =========================
   // 1) Lines（ここに増やしていく）
-  //   color: 路線色（CSS変数 --line を更新）
   // =========================
   const lines = [
     {
       id: "oedo",
       name: "都営大江戸線",
-      color: "#b6007a", // マゼンタ（本物寄せ）
+      color: "#b6007a", // マゼンタ寄せ
       stations: [
         { id:"E-01", code:"E-01", name:"新宿西口", x:140, y:420 },
         { id:"E-02", code:"E-02", name:"東新宿", x:200, y:420 },
@@ -200,9 +200,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================
   // 6) State（路線切り替え用）
   // =========================
-  let currentLine = null;      // {id,name,color,stations...}
-  let stations = [];           // 現在描画している stations（編集で変わる）
-  let proofs = [];             // 現在路線の proofs
+  let currentLine = null;
+  let stations = [];
+  let proofs = [];
   let selectedStation = null;
 
   // editor state
@@ -212,11 +212,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const GRID_SIZE = 20;
   const GRID_BOLD = 100;
 
-  let dragging = null; // { station, dx, dy }
+  let dragging = null;
   let movedDuringDrag = false;
 
   // photo source
-  let lastPhotoSource = "file"; // "file" or "camera"
+  let lastPhotoSource = "file";
 
   // =========================
   // 7) Helpers
@@ -237,7 +237,6 @@ window.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(proofKey(currentLine.id), JSON.stringify(proofs));
   }
 
-  // 路線ごとにレイアウト保存
   function loadLayout(line){
     const raw = localStorage.getItem(layoutKey(line.id));
     if (!raw) return line.stations.map(s => ({...s}));
@@ -253,6 +252,7 @@ window.addEventListener("DOMContentLoaded", () => {
       return line.stations.map(s => ({...s}));
     }
   }
+
   function saveLayout(){
     if (!currentLine) return;
     const arr = stations.map(s => ({
@@ -370,9 +370,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function endDrag(){
-    if (dragging) {
-      saveLayout();
-    }
+    if (dragging) saveLayout();
     dragging = null;
   }
 
@@ -383,17 +381,13 @@ window.addEventListener("DOMContentLoaded", () => {
   // 9) ラベル配置
   // =========================
   function labelPlacement(lineId, st){
-    // 大江戸線：築地市場は左
     if (lineId === "oedo" && st.id === "E-18") {
       return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
     }
-
-    // 大江戸線：上端の2駅（練馬春日町/光が丘）は左
     if (lineId === "oedo" && (st.id === "E-37" || st.id === "E-38")) {
       return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
     }
 
-    // ===== 丸ノ内線：被り回避 =====
     if (lineId === "marunouchi") {
       // 中野坂上は必ず下
       if (st.id === "M-20") {
@@ -403,43 +397,32 @@ window.addEventListener("DOMContentLoaded", () => {
       // 縦ライン（M-01〜M-19）：左右交互
       if (/^M-(0[1-9]|1\d)$/.test(st.id)) {
         const idx = stations.findIndex(x => x.id === st.id);
-        const isLeft = idx % 2 === 0; // 0,2,4...を左
+        const isLeft = idx % 2 === 0;
         return isLeft
           ? { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" }
           : { nameDx: 18,  nameDy: 5, codeDx: 18,  codeDy: 16, anchor: "start" };
       }
 
-      // 横ライン（M-21〜M-28）：上下交互（上下を逆に）
+      // 横ライン（M-21〜M-28）：上下交互（上下を逆）
       if (/^M-(21|22|23|24|25|26|27|28)$/.test(st.id)) {
         const order = ["M-25","M-24","M-23","M-22","M-21","M-26","M-27","M-28"];
         const i = order.indexOf(st.id);
+        const isUp = (i === -1) ? true : (i % 2 === 1); // 逆：奇数=上、偶数=下
 
-        // 上下を逆：奇数=上、偶数=下
-        const isUp = (i === -1) ? true : (i % 2 === 1);
-
-        if (isUp) {
-          return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
-        } else {
-          return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
-        }
+        if (isUp) return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+        return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
       }
     }
 
-    // ===== 共通ルール（デフォルト） =====
-    // 上端（yが小さい）→下に出す
     if (st.y <= 80) {
       return { nameDx: 0, nameDy: 18, codeDx: 0, codeDy: 32, anchor: "middle" };
     }
-
-    // 左側 → 左、右側 → 右
     if (st.x <= 90) {
       return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
     }
     if (st.x >= 300) {
       return { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
     }
-
-    // それ以外 → 上に
     return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
   }
 
@@ -476,14 +459,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (!currentLine) return;
 
-    // 路線（環状に閉じない）
     const pts = stations.map(s => `${s.x},${s.y}`).join(" ");
     const route = elNS("polyline");
     route.setAttribute("points", pts);
     route.setAttribute("class", "routeLine");
     svg.appendChild(route);
 
-    // 大江戸線だけ支線：E-01 → E-28
     if (currentLine.id === "oedo") {
       const e01 = stations.find(s => s.id === "E-01");
       const e28 = stations.find(s => s.id === "E-28");
@@ -543,7 +524,9 @@ window.addEventListener("DOMContentLoaded", () => {
         startDrag(s, evt);
       };
 
-      const onClick = () => {
+      // ★重要：ここで stopPropagation して「駅以外タップで閉じる」に伝播させない
+      const onClick = (evt) => {
+        evt.stopPropagation();
         if (!currentLine) return;
         if (editMode) {
           if (movedDuringDrag) return;
@@ -621,7 +604,6 @@ window.addEventListener("DOMContentLoaded", () => {
     closeSheet();
     closeModal();
 
-    // 路線切り替え時は編集モードOFF
     setEditMode(false);
 
     hideEmpty();
@@ -649,34 +631,20 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   closeSheetBtn?.addEventListener("click", closeSheet);
 
-  // ===== シート外タップで閉じる =====
-function isSheetOpen(){
-  return !sheet.classList.contains("hidden");
-}
+  // シート内タップは伝播させない（保険）
+  sheet?.addEventListener("click", (e) => e.stopPropagation());
 
-// シート内のタップは外側へ伝播させない（誤爆防止）
-sheet.addEventListener("click", (e) => {
-  e.stopPropagation();
-});
+  // ★駅詳細シート表示中：駅以外（線/背景）タップで閉じる
+  svg.addEventListener("click", (e) => {
+    if (sheet.classList.contains("hidden")) return;
+    if (!currentLine) return;
 
-// 背面（路線図側）をタップしたら閉じる
-svg.addEventListener("click", () => {
-  if (!isSheetOpen()) return;
-  closeSheet();
-});
+    // 駅（g.stationNode）をタップした場合は閉じない
+    if (e.target.closest && e.target.closest(".stationNode")) return;
 
-// 背面がsvg以外（mainの余白など）でも閉じたい場合は window でも拾う
-document.addEventListener("click", (e) => {
-  if (!isSheetOpen()) return;
-
-  // シート内は無視（念のため）
-  if (sheet.contains(e.target)) return;
-
-  // モーダルが開いている時はシートは閉じない（誤動作防止）
-  if (!modal.classList.contains("hidden")) return;
-
-  closeSheet();
-});
+    // 駅名/駅番号は onClick 側で stopPropagation しているので、ここには来ない想定
+    closeSheet();
+  });
 
   // =========================
   // 14) Proof list（表示順：コメント→写真→日付）
@@ -767,14 +735,12 @@ document.addEventListener("click", (e) => {
 
     modal.classList.remove("hidden");
 
-    // ★モーダル中はハンバーガーを隠す
+    // モーダル中はハンバーガーを隠す
     if (menuButton) menuButton.style.display = "none";
   }
 
   function closeModal(){
     modal.classList.add("hidden");
-
-    // ★戻す
     if (menuButton) menuButton.style.display = "";
   }
 
@@ -787,7 +753,6 @@ document.addEventListener("click", (e) => {
   closeModalBtn?.addEventListener("click", closeModal);
   modal?.querySelector(".modal__backdrop")?.addEventListener("click", closeModal);
 
-  // 左右ボタン → 隠しinputを開く
   pickPhotoBtn?.addEventListener("click", () => {
     lastPhotoSource = "file";
     photoInputFile?.click();
@@ -798,7 +763,6 @@ document.addEventListener("click", (e) => {
     photoInputCamera?.click();
   });
 
-  // photo preview
   function preview(file){
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -820,7 +784,6 @@ document.addEventListener("click", (e) => {
     if (f) preview(f);
   });
 
-  // 選びなおす → 直前の入口を開く
   reselectBtn?.addEventListener("click", () => {
     if (lastPhotoSource === "camera") photoInputCamera?.click();
     else photoInputFile?.click();
@@ -833,7 +796,6 @@ document.addEventListener("click", (e) => {
     photoPreviewInner.innerHTML = "";
   });
 
-  // save proof
   saveProofBtn?.addEventListener("click", () => {
     const file = photoInputFile.files?.[0] || photoInputCamera.files?.[0];
     if (!file){
@@ -917,7 +879,6 @@ document.addEventListener("click", (e) => {
       snapToGrid = snapToggle.checked;
     });
   } else {
-    // iPhoneは編集機能OFF
     editMode = false;
     showGrid = false;
     snapToGrid = true;
