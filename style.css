@@ -124,24 +124,42 @@ body{
   top: 10px;
   left: 10px;
   z-index: 2600;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(0,0,0,.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  /* 影で“アプリ感” */
+  box-shadow: 0 8px 20px rgba(0,0,0,.35);
+
+  cursor: pointer;
   display: grid;
   place-items: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .08s ease, background .15s ease, border-color .15s ease;
 }
+.menuButton:active{
+  transform: translateY(1px);
+  background: rgba(0,0,0,.62);
+  border-color: rgba(255,255,255,.18);
+}
+
+/* spanを“等間隔”にする */
 .menuButton span{
-  display:block;
-  width: 20px;
-  height: 2px;
-  background: rgba(255,255,255,.9);
+  position: absolute;
+  width: 20px;      /* 長すぎると野暮ったいので少し短め */
+  height: 2.5px;    /* 少し太めで綺麗 */
+  background: rgba(255,255,255,.92);
   border-radius: 999px;
-  margin: 2px 0;
 }
+
+/* 線間を短く、均等に */
+.menuButton span:nth-child(1){ transform: translateY(-6px); }
+.menuButton span:nth-child(2){ transform: translateY(0px); }
+.menuButton span:nth-child(3){ transform: translateY(6px); }
 
 .sideMenu{
   position: fixed;

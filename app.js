@@ -73,37 +73,37 @@ window.addEventListener("DOMContentLoaded", () => {
       id: "marunouchi",
       name: "東京メトロ丸ノ内線",
       color: "#ff3b30", // 赤
-      // 仮配置（編集モードで整えられます）
       stations: [
-        { id:"M-01", code:"M-01", name:"池袋", x:200, y:40 },
-        { id:"M-02", code:"M-02", name:"新大塚", x:200, y:80 },
-        { id:"M-03", code:"M-03", name:"茗荷谷", x:200, y:120 },
-        { id:"M-04", code:"M-04", name:"後楽園", x:200, y:160 },
-        { id:"M-05", code:"M-05", name:"本郷三丁目", x:200, y:200 },
-        { id:"M-06", code:"M-06", name:"御茶ノ水", x:200, y:240 },
-        { id:"M-07", code:"M-07", name:"淡路町", x:200, y:280 },
-        { id:"M-08", code:"M-08", name:"大手町", x:200, y:320 },
-        { id:"M-09", code:"M-09", name:"東京", x:200, y:360 },
-        { id:"M-10", code:"M-10", name:"銀座", x:200, y:400 },
-        { id:"M-11", code:"M-11", name:"霞ヶ関", x:200, y:440 },
-        { id:"M-12", code:"M-12", name:"国会議事堂前", x:200, y:480 },
-        { id:"M-13", code:"M-13", name:"赤坂見附", x:200, y:520 },
-        { id:"M-14", code:"M-14", name:"四ツ谷", x:200, y:560 },
-        { id:"M-15", code:"M-15", name:"四谷三丁目", x:200, y:600 },
-        { id:"M-16", code:"M-16", name:"新宿御苑前", x:200, y:640 },
-        { id:"M-17", code:"M-17", name:"新宿三丁目", x:200, y:680 },
-        { id:"M-18", code:"M-18", name:"新宿", x:200, y:720 },
-        { id:"M-19", code:"M-19", name:"西新宿", x:200, y:760 },
-        { id:"M-20", code:"M-20", name:"中野坂上", x:200, y:800 },
-        { id:"M-21", code:"M-21", name:"新中野", x:160, y:820 },
-        { id:"M-22", code:"M-22", name:"東高円寺", x:120, y:840 },
-        { id:"M-23", code:"M-23", name:"新高円寺", x:80, y:820 },
+        { id:"M-01", code:"M-01", name:"池袋", x:220, y:20 },
+        { id:"M-02", code:"M-02", name:"新大塚", x:220, y:60 },
+        { id:"M-03", code:"M-03", name:"茗荷谷", x:220, y:100 },
+        { id:"M-04", code:"M-04", name:"後楽園", x:220, y:140 },
+        { id:"M-05", code:"M-05", name:"本郷三丁目", x:220, y:180 },
+        { id:"M-06", code:"M-06", name:"御茶ノ水", x:220, y:220 },
+        { id:"M-07", code:"M-07", name:"淡路町", x:220, y:260 },
+        { id:"M-08", code:"M-08", name:"大手町", x:220, y:300 },
+        { id:"M-09", code:"M-09", name:"東京", x:220, y:340 },
+        { id:"M-10", code:"M-10", name:"銀座", x:220, y:380 },
+        { id:"M-11", code:"M-11", name:"霞ヶ関", x:220, y:420 },
+        { id:"M-12", code:"M-12", name:"国会議事堂前", x:220, y:460 },
+        { id:"M-13", code:"M-13", name:"赤坂見附", x:220, y:500 },
+        { id:"M-14", code:"M-14", name:"四ツ谷", x:220, y:540 },
+        { id:"M-15", code:"M-15", name:"四谷三丁目", x:220, y:580 },
+        { id:"M-16", code:"M-16", name:"新宿御苑前", x:220, y:620 },
+        { id:"M-17", code:"M-17", name:"新宿三丁目", x:220, y:660 },
+        { id:"M-18", code:"M-18", name:"新宿", x:220, y:700 },
+        { id:"M-19", code:"M-19", name:"西新宿", x:220, y:740 },
+        { id:"M-20", code:"M-20", name:"中野坂上", x:220, y:780 },
+
+        { id:"M-21", code:"M-21", name:"新中野", x:180, y:780 },
+        { id:"M-22", code:"M-22", name:"東高円寺", x:140, y:780 },
+        { id:"M-23", code:"M-23", name:"新高円寺", x:100, y:780 },
         { id:"M-24", code:"M-24", name:"南阿佐ケ谷", x:60, y:780 },
-        { id:"M-25", code:"M-25", name:"荻窪", x:60, y:740 },
-        // 支線（中野坂上→方南町）
-        { id:"M-26", code:"M-26", name:"中野新橋", x:240, y:820 },
-        { id:"M-27", code:"M-27", name:"中野富士見町", x:280, y:820 },
-        { id:"M-28", code:"M-28", name:"方南町", x:320, y:820 },
+        { id:"M-25", code:"M-25", name:"荻窪", x:20, y:780 },
+
+        { id:"M-26", code:"M-26", name:"中野新橋", x:260, y:780 },
+        { id:"M-27", code:"M-27", name:"中野富士見町", x:300, y:780 },
+        { id:"M-28", code:"M-28", name:"方南町", x:340, y:780 },
       ],
     }
   ];
@@ -383,28 +383,57 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================
   // 9) ラベル配置（路線ごとに分岐してOK）
   // =========================
-  function labelPlacement(lineId, st){
-    // 大江戸線：築地市場は左
-    if (lineId === "oedo" && st.id === "E-18") {
-      return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
-    }
-
-    // ざっくり：左右どちらかに逃がす（被り軽減）
-    // 左側（xが小さい）→左、右側（xが大きい）→右、上段/下段→上
-    if (st.y <= 80) {
-      return { nameDx: 0, nameDy: 18, codeDx: 0, codeDy: 32, anchor: "middle" };
-    }
-
-    if (st.x <= 90) {
-      return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
-    }
-    if (st.x >= 300) {
-      return { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
-    }
-
-    // 上段/下段は上へ
-    return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+function labelPlacement(lineId, st){
+  // 大江戸線：築地市場は左
+  if (lineId === "oedo" && st.id === "E-18") {
+    return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
   }
+
+  // 大江戸線：上端の2駅は左（光が丘・練馬春日町）
+  if (lineId === "oedo" && (st.id === "E-37" || st.id === "E-38")) {
+    return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
+  }
+
+  // ===== 丸ノ内線：被り回避（左右交互） =====
+  if (lineId === "marunouchi") {
+    // 縦の柱（M-01〜M-20）：左右交互に出す
+    if (/^M-(0[1-9]|1\d|20)$/.test(st.id)) {
+      // stations 配列の順番を使って交互にする（レイアウト変更にも強い）
+      const idx = stations.findIndex(x => x.id === st.id); // 0-based
+      const isLeft = idx % 2 === 0; // 0,2,4...を左に
+      return isLeft
+        ? { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" }
+        : { nameDx: 18,  nameDy: 5, codeDx: 18,  codeDy: 16, anchor: "start" };
+    }
+
+    // 横ライン（y=780 付近）は上に出す（左右に分散しつつ）
+    // 左側（M-21〜M-25）
+    if (/^M-(21|22|23|24|25)$/.test(st.id)) {
+      return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+    }
+    // 右側（支線 M-26〜M-28）も上に
+    if (/^M-(26|27|28)$/.test(st.id)) {
+      return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+    }
+  }
+
+  // ===== 共通ルール（デフォルト） =====
+  // 上端（yが小さい）→下に出す
+  if (st.y <= 80) {
+    return { nameDx: 0, nameDy: 18, codeDx: 0, codeDy: 32, anchor: "middle" };
+  }
+
+  // 左側 → 左、右側 → 右
+  if (st.x <= 90) {
+    return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
+  }
+  if (st.x >= 300) {
+    return { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
+  }
+
+  // それ以外 → 上に
+  return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+}
 
   // =========================
   // 10) Render
