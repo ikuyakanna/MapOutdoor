@@ -63,26 +63,61 @@ window.addEventListener("DOMContentLoaded", () => {
     markerLayers.length = 0;
   }
 
-  function renderMarkers() {
-    clearMarkers();
+function renderMarkers() {
+  clearMarkers();
 
-    stations.forEach((s) => {
-      const visited = proofs.some((p) => p.stationId === s.id);
+  // 丸いカスタムピンを作る関数
+  function markerIcon(visited) {
+    const color = visited ? "var(--ok)" : "var(--accent)";
+    const inner = visited ? "✓" : "●";
 
-      const m = L.marker([s.lat, s.lon]).addTo(map).on("click", () => openSheet(s));
-
-      // 常時表示ラベル
-      m.bindTooltip(`${s.name}${visited ? "（達成）" : ""}`, {
-        permanent: true,
-        direction: "top",
-        offset: [0, -18],
-        opacity: 0.95,
-        className: "stationLabel",
-      });
-
-      markerLayers.push(m);
+    return L.divIcon({
+      className: "customPin",
+      html: `
+        <div style="
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          background: rgba(0,0,0,.65);
+          border: 2px solid ${color};
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color: ${color};
+          font-weight: 900;
+          font-size: 14px;
+          box-shadow: 0 6px 16px rgba(0,0,0,.5);
+        ">
+          ${inner}
+        </div>
+      `,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
     });
   }
+
+  stations.forEach((s) => {
+    const visited = proofs.some((p) => p.stationId === s.id);
+
+    const m = L.marker(
+      [s.lat, s.lon],
+      { icon: markerIcon(visited) }
+    )
+      .addTo(map)
+      .on("click", () => openSheet(s));
+
+    // 駅名を常時表示
+    m.bindTooltip(`${s.name}${visited ? "（達成）" : ""}`, {
+      permanent: true,
+      direction: "top",
+      offset: [0, -22],
+      opacity: 0.95,
+      className: "stationLabel",
+    });
+
+    markerLayers.push(m);
+  });
+}
 
   // ---- Sheet ----
   function openSheet(station) {
