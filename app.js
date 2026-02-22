@@ -304,7 +304,7 @@ if (st.y === 420 && st.x >= 120) {
       const wobble = (n % 2 === 0) ? 6 : -6;
       return {
         nameDx: 18,
-        nameDy: wobble,
+        nameDy: 6,
         codeDx: 18,
         codeDy: 16,
         anchor: "start",
@@ -316,7 +316,7 @@ if (st.y === 420 && st.x >= 120) {
       const wobble = (n % 2 === 0) ? 6 : -6;
       return {
         nameDx: -18,
-        nameDy: wobble,
+        nameDy: 6,
         codeDx: -18,
         codeDy: 16,
         anchor: "end",
