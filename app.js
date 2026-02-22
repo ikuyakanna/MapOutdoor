@@ -374,15 +374,15 @@ window.addEventListener("DOMContentLoaded", () => {
     renderGrid();
 
     // 背景枠
-    const bg = elNS("rect");
-    bg.setAttribute("x", "16");
-    bg.setAttribute("y", "16");
-    bg.setAttribute("width", String(SVG_W - 32));
-    bg.setAttribute("height", String(SVG_H - 32));
-    bg.setAttribute("rx", "22");
-    bg.setAttribute("fill", "rgba(255,255,255,.03)");
-    bg.setAttribute("stroke", "rgba(255,255,255,.06)");
-    svg.appendChild(bg);
+    // const bg = elNS("rect");
+    // bg.setAttribute("x", "16");
+    // bg.setAttribute("y", "16");
+    // bg.setAttribute("width", String(SVG_W - 32));
+    // bg.setAttribute("height", String(SVG_H - 32));
+    // bg.setAttribute("rx", "22");
+    // bg.setAttribute("fill", "rgba(255,255,255,.03)");
+    // bg.setAttribute("stroke", "rgba(255,255,255,.06)");
+    // svg.appendChild(bg);
 
     // 路線（環状に閉じない）
     const pts = stations.map(s => `${s.x},${s.y}`).join(" ");
