@@ -274,7 +274,6 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================
   function labelPlacement(st){
     const n = parseInt(st.id.replace("E-", ""), 10);
-    const alt = (n % 2 === 0) ? 18 : -18; // ★上段/下段の横並び用の左右ズラし
 
     // ★ 例外：築地市場（E-18）は左に出す（最優先）
     if (st.id === "E-18") {
@@ -290,9 +289,9 @@ window.addEventListener("DOMContentLoaded", () => {
     // 上段（E-01〜E-04）：上へ＋左右交互（被り回避）
     if (st.y === 420 && st.x >= 140) {
       return {
-        nameDx: alt,
+        nameDx: 0,
         nameDy: -18,
-        codeDx: alt,
+        codeDx: 0,
         codeDy: -34,
         anchor: "middle",
       };
@@ -301,9 +300,9 @@ window.addEventListener("DOMContentLoaded", () => {
     // 下段（E-15〜E-17）：上へ＋左右交互（E-18は例外で左へ）
     if (st.y === 820 && st.x <= 260) {
       return {
-        nameDx: alt,
+        nameDx: 0,
         nameDy: -18,
-        codeDx: alt,
+        codeDx: 0,
         codeDy: -34,
         anchor: "middle",
       };
@@ -311,12 +310,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // 右縦（x=320）：右へ（外側）
     if (st.x === 320) {
-      const wobble = (n % 2 === 0) ? 6 : -6; // 縦並びの視認性アップ
       return {
         nameDx: 18,
-        nameDy: wobble,
+        nameDy: 5,
         codeDx: 18,
-        codeDy: 16 + wobble,
+        codeDy: 16,
         anchor: "start",
       };
     }
@@ -326,9 +324,9 @@ window.addEventListener("DOMContentLoaded", () => {
       const wobble = (n % 2 === 0) ? 6 : -6;
       return {
         nameDx: -18,
-        nameDy: wobble,
+        nameDy: 5,
         codeDx: -18,
-        codeDy: 16 + wobble,
+        codeDy: 16,
         anchor: "end",
       };
     }
