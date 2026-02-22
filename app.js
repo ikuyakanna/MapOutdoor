@@ -649,6 +649,35 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   closeSheetBtn?.addEventListener("click", closeSheet);
 
+  // ===== シート外タップで閉じる =====
+function isSheetOpen(){
+  return !sheet.classList.contains("hidden");
+}
+
+// シート内のタップは外側へ伝播させない（誤爆防止）
+sheet.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+// 背面（路線図側）をタップしたら閉じる
+svg.addEventListener("click", () => {
+  if (!isSheetOpen()) return;
+  closeSheet();
+});
+
+// 背面がsvg以外（mainの余白など）でも閉じたい場合は window でも拾う
+document.addEventListener("click", (e) => {
+  if (!isSheetOpen()) return;
+
+  // シート内は無視（念のため）
+  if (sheet.contains(e.target)) return;
+
+  // モーダルが開いている時はシートは閉じない（誤動作防止）
+  if (!modal.classList.contains("hidden")) return;
+
+  closeSheet();
+});
+
   // =========================
   // 14) Proof list（表示順：コメント→写真→日付）
   // =========================
