@@ -549,7 +549,7 @@ window.addEventListener("DOMContentLoaded", () => {
         stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
       });
 
-      card.append(meta, img, comment, del);
+      card.append(comment, img, meta, del);
       proofList.appendChild(card);
     });
   }
