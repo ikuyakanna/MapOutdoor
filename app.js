@@ -4,51 +4,54 @@
 // - 写真必須で証保存（削除可）
 // - 編集モードONで駅をドラッグして配置調整 → JSONコピー/保存
 // - 編集モード中：グリッド表示 & グリッド吸着（スナップ）
+// - 路線は環状に閉じない（E-38→E-01は繋がない）
+// - 支線として E-01(新宿西口) → E-28(都庁前) を線で追加
+// - 駅名/コードはマークの上に表示
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
   // 1) Stations（全38駅）
-  // ※ x,y は「それっぽい形」の簡易配置。編集モードで調整できます。
+  // ※ あなたの配置JSONを反映
   // =========================
   const stations = [
-    { id:"E-01", code:"E-01", name:"新宿西口", x:520, y:250 },
-    { id:"E-02", code:"E-02", name:"東新宿", x:600, y:270 },
-    { id:"E-03", code:"E-03", name:"若松河田", x:650, y:295 },
-    { id:"E-04", code:"E-04", name:"牛込柳町", x:690, y:330 },
-    { id:"E-05", code:"E-05", name:"牛込神楽坂", x:710, y:370 },
-    { id:"E-06", code:"E-06", name:"飯田橋", x:700, y:410 },
-    { id:"E-07", code:"E-07", name:"春日", x:680, y:450 },
-    { id:"E-08", code:"E-08", name:"本郷三丁目", x:650, y:490 },
-    { id:"E-09", code:"E-09", name:"上野御徒町", x:610, y:525 },
-    { id:"E-10", code:"E-10", name:"新御徒町", x:570, y:545 },
-    { id:"E-11", code:"E-11", name:"蔵前", x:525, y:555 },
-    { id:"E-12", code:"E-12", name:"両国", x:475, y:555 },
-    { id:"E-13", code:"E-13", name:"森下", x:420, y:545 },
-    { id:"E-14", code:"E-14", name:"清澄白河", x:380, y:520 },
-    { id:"E-15", code:"E-15", name:"門前仲町", x:350, y:485 },
-    { id:"E-16", code:"E-16", name:"月島", x:340, y:445 },
-    { id:"E-17", code:"E-17", name:"勝どき", x:350, y:405 },
-    { id:"E-18", code:"E-18", name:"築地市場", x:380, y:365 },
-    { id:"E-19", code:"E-19", name:"汐留", x:410, y:330 },
-    { id:"E-20", code:"E-20", name:"大門", x:440, y:300 },
-    { id:"E-21", code:"E-21", name:"赤羽橋", x:470, y:275 },
-    { id:"E-22", code:"E-22", name:"麻布十番", x:505, y:255 },
-    { id:"E-23", code:"E-23", name:"六本木", x:545, y:240 },
-    { id:"E-24", code:"E-24", name:"青山一丁目", x:590, y:230 },
-    { id:"E-25", code:"E-25", name:"国立競技場", x:630, y:225 },
-    { id:"E-26", code:"E-26", name:"代々木", x:660, y:215 },
-    { id:"E-27", code:"E-27", name:"新宿", x:610, y:205 },
-    { id:"E-28", code:"E-28", name:"都庁前", x:560, y:205 },
-    { id:"E-29", code:"E-29", name:"西新宿五丁目", x:500, y:210 },
-    { id:"E-30", code:"E-30", name:"中野坂上", x:450, y:225 },
-    { id:"E-31", code:"E-31", name:"東中野", x:410, y:250 },
-    { id:"E-32", code:"E-32", name:"中井", x:385, y:285 },
-    { id:"E-33", code:"E-33", name:"落合南長崎", x:375, y:330 },
-    { id:"E-34", code:"E-34", name:"新江古田", x:385, y:375 },
-    { id:"E-35", code:"E-35", name:"練馬", x:410, y:420 },
-    { id:"E-36", code:"E-36", name:"豊島園", x:445, y:455 },
-    { id:"E-37", code:"E-37", name:"練馬春日町", x:480, y:485 },
-    { id:"E-38", code:"E-38", name:"光が丘", x:520, y:505 },
+    { id:"E-01", code:"E-01", name:"新宿西口", x:500, y:260 },
+    { id:"E-02", code:"E-02", name:"東新宿", x:540, y:260 },
+    { id:"E-03", code:"E-03", name:"若松河田", x:580, y:260 },
+    { id:"E-04", code:"E-04", name:"牛込柳町", x:620, y:260 },
+    { id:"E-05", code:"E-05", name:"牛込神楽坂", x:660, y:260 },
+    { id:"E-06", code:"E-06", name:"飯田橋", x:700, y:260 },
+    { id:"E-07", code:"E-07", name:"春日", x:740, y:260 },
+    { id:"E-08", code:"E-08", name:"本郷三丁目", x:780, y:260 },
+    { id:"E-09", code:"E-09", name:"上野御徒町", x:820, y:260 },
+    { id:"E-10", code:"E-10", name:"新御徒町", x:860, y:260 },
+    { id:"E-11", code:"E-11", name:"蔵前", x:900, y:260 },
+    { id:"E-12", code:"E-12", name:"両国", x:940, y:260 },
+    { id:"E-13", code:"E-13", name:"森下", x:980, y:260 },
+    { id:"E-14", code:"E-14", name:"清澄白河", x:980, y:400 },
+    { id:"E-15", code:"E-15", name:"門前仲町", x:940, y:400 },
+    { id:"E-16", code:"E-16", name:"月島", x:900, y:400 },
+    { id:"E-17", code:"E-17", name:"勝どき", x:860, y:400 },
+    { id:"E-18", code:"E-18", name:"築地市場", x:820, y:400 },
+    { id:"E-19", code:"E-19", name:"汐留", x:780, y:400 },
+    { id:"E-20", code:"E-20", name:"大門", x:740, y:400 },
+    { id:"E-21", code:"E-21", name:"赤羽橋", x:700, y:400 },
+    { id:"E-22", code:"E-22", name:"麻布十番", x:660, y:400 },
+    { id:"E-23", code:"E-23", name:"六本木", x:620, y:400 },
+    { id:"E-24", code:"E-24", name:"青山一丁目", x:580, y:400 },
+    { id:"E-25", code:"E-25", name:"国立競技場", x:540, y:400 },
+    { id:"E-26", code:"E-26", name:"代々木", x:500, y:400 },
+    { id:"E-27", code:"E-27", name:"新宿", x:460, y:400 },
+    { id:"E-28", code:"E-28", name:"都庁前", x:420, y:400 },
+    { id:"E-29", code:"E-29", name:"西新宿五丁目", x:380, y:400 },
+    { id:"E-30", code:"E-30", name:"中野坂上", x:340, y:400 },
+    { id:"E-31", code:"E-31", name:"東中野", x:300, y:400 },
+    { id:"E-32", code:"E-32", name:"中井", x:260, y:400 },
+    { id:"E-33", code:"E-33", name:"落合南長崎", x:220, y:400 },
+    { id:"E-34", code:"E-34", name:"新江古田", x:180, y:400 },
+    { id:"E-35", code:"E-35", name:"練馬", x:140, y:400 },
+    { id:"E-36", code:"E-36", name:"豊島園", x:100, y:400 },
+    { id:"E-37", code:"E-37", name:"練馬春日町", x:60, y:400 },
+    { id:"E-38", code:"E-38", name:"光が丘", x:20, y:400 },
   ];
 
   // =========================
@@ -153,7 +156,6 @@ window.addEventListener("DOMContentLoaded", () => {
       await navigator.clipboard.writeText(text);
       alert("配置JSONをクリップボードにコピーしました！");
     }catch{
-      // フォールバック
       const ta = document.createElement("textarea");
       ta.value = text;
       document.body.appendChild(ta);
@@ -225,7 +227,7 @@ window.addEventListener("DOMContentLoaded", () => {
       newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
     }
 
-    // 画面外に飛びすぎないように軽く制限（任意）
+    // 画面外に飛びすぎないように軽く制限
     newX = Math.max(20, Math.min(SVG_W - 20, newX));
     newY = Math.max(20, Math.min(SVG_H - 20, newY));
 
@@ -233,14 +235,13 @@ window.addEventListener("DOMContentLoaded", () => {
     dragging.station.y = newY;
     movedDuringDrag = true;
 
-    renderSvg(true);
+    renderSvg();
   }
 
   function endDrag(){
     dragging = null;
   }
 
-  // Pointer events（PC/タッチ両対応）
   svg.addEventListener("pointermove", moveDrag, { passive: false });
   window.addEventListener("pointerup", endDrag);
 
@@ -248,7 +249,6 @@ window.addEventListener("DOMContentLoaded", () => {
   // 7) Render SVG
   // =========================
   function renderGrid(){
-    // グリッドは編集モードONかつ表示ONのときだけ
     if (!(editMode && showGrid)) return;
 
     for (let x = 0; x <= SVG_W; x += GRID_SIZE) {
@@ -289,12 +289,25 @@ window.addEventListener("DOMContentLoaded", () => {
     bg.setAttribute("stroke", "rgba(255,255,255,.06)");
     svg.appendChild(bg);
 
-    // 路線（駅順に接続）
+    // ===== 路線（環状に閉じない）=====
     const pts = stations.map(s => `${s.x},${s.y}`).join(" ");
     const line = elNS("polyline");
-    line.setAttribute("points", pts + " " + `${stations[0].x},${stations[0].y}`);
+    line.setAttribute("points", pts);
     line.setAttribute("class", "routeLine");
     svg.appendChild(line);
+
+    // ===== 支線：E-01(新宿西口) → E-28(都庁前) =====
+    const e01 = stations.find(s => s.id === "E-01");
+    const e28 = stations.find(s => s.id === "E-28");
+    if (e01 && e28) {
+      const spur = elNS("line");
+      spur.setAttribute("x1", e01.x);
+      spur.setAttribute("y1", e01.y);
+      spur.setAttribute("x2", e28.x);
+      spur.setAttribute("y2", e28.y);
+      spur.setAttribute("class", "routeLine");
+      svg.appendChild(spur);
+    }
 
     // 駅
     stations.forEach((s) => {
@@ -318,16 +331,18 @@ window.addEventListener("DOMContentLoaded", () => {
       inner.setAttribute("fill", "rgba(0,0,0,0)");
       inner.setAttribute("stroke", visited ? "var(--ok)" : "var(--accent)");
 
-      // ラベル
+      // ===== ラベル（マークの上・中央寄せ）=====
       const label = elNS("text");
-      label.setAttribute("x", s.x + 16);
-      label.setAttribute("y", s.y - 2);
+      label.setAttribute("x", s.x);
+      label.setAttribute("y", s.y - 18);
+      label.setAttribute("text-anchor", "middle");
       label.setAttribute("class", "stationLabel");
       label.textContent = s.name;
 
       const code = elNS("text");
-      code.setAttribute("x", s.x + 16);
-      code.setAttribute("y", s.y + 14);
+      code.setAttribute("x", s.x);
+      code.setAttribute("y", s.y - 34);
+      code.setAttribute("text-anchor", "middle");
       code.setAttribute("class", "stationCode");
       code.textContent = s.code;
 
@@ -341,7 +356,6 @@ window.addEventListener("DOMContentLoaded", () => {
       };
 
       const onClick = () => {
-        // ドラッグで動かした直後のclickを無視
         if (editMode) {
           if (movedDuringDrag) return;
           return;
