@@ -246,3 +246,41 @@ textarea{
   stroke-linejoin: round;
   cursor: pointer;
 }
+
+/* ===== 編集バー ===== */
+.editorBar{
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 9000;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(18,26,41,.80);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(6px);
+}
+
+.editorHint{
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 編集モード中の駅：少し大きく見せる */
+.stationNode.editing .stationOuter{ stroke: rgba(255,255,255,.35); }
+.stationNode.editing .stationInner{ stroke-width: 4; }
+
+/* ===== グリッド（編集モード時） ===== */
+.gridLine{
+  stroke: rgba(255,255,255,.06);
+  stroke-width: 1;
+}
+
+.gridBold{
+  stroke: rgba(255,255,255,.12);
+  stroke-width: 1.5;
+}

@@ -14,6 +14,22 @@
 </header>
 
 <main class="main">
+  <!-- 編集バー（PCで調整用） -->
+<section class="editorBar" id="editorBar">
+  <button class="btn btn--ghost" id="toggleEditBtn" type="button">編集モード：OFF</button>
+  <button class="btn btn--ghost" id="copyJsonBtn" type="button">配置JSONをコピー</button>
+  <button class="btn btn--ghost" id="downloadJsonBtn" type="button">JSONを保存</button>
+  <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;">
+  <input type="checkbox" id="gridToggle">
+  グリッド表示
+</label>
+
+<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;">
+  <input type="checkbox" id="snapToggle" checked>
+  グリッド吸着
+</label>
+  <span class="editorHint" id="editorHint">編集モードONで駅をドラッグできます</span>
+</section>
   <!-- 自前の簡易路線図（SVG） -->
   <div class="mapWrap">
     <svg id="oedoSvg" class="oedoSvg" viewBox="0 0 1000 700" role="img" aria-label="都営大江戸線（簡易路線図）">

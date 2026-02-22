@@ -1,14 +1,14 @@
-// 大江戸線 証アプリ（SVG簡易路線図版）
-// - 外部APIなし
-// - GitHub Pagesで完結
+// 大江戸線 証アプリ（SVG簡易路線図 + 編集モード + グリッド）
+// - 外部APIなし（無料運用向き）
 // - 駅クリック → 詳細シート
 // - 写真必須で証保存（削除可）
+// - 編集モードONで駅をドラッグして配置調整 → JSONコピー/保存
+// - 編集モード中：グリッド表示 & グリッド吸着（スナップ）
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
   // 1) Stations（全38駅）
-  // ※ x,y は「それっぽい形」の簡易配置です
-  //   後で微調整したい場合はここをいじるだけでOK
+  // ※ x,y は「それっぽい形」の簡易配置。編集モードで調整できます。
   // =========================
   const stations = [
     { id:"E-01", code:"E-01", name:"新宿西口", x:520, y:250 },
@@ -67,6 +67,15 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================
   const svg = document.getElementById("oedoSvg");
 
+  // editor bar
+  const toggleEditBtn = document.getElementById("toggleEditBtn");
+  const copyJsonBtn = document.getElementById("copyJsonBtn");
+  const downloadJsonBtn = document.getElementById("downloadJsonBtn");
+  const editorHint = document.getElementById("editorHint");
+  const gridToggle = document.getElementById("gridToggle");
+  const snapToggle = document.getElementById("snapToggle");
+
+  // sheet
   const sheet = document.getElementById("sheet");
   const stationName = document.getElementById("stationName");
   const stationStatus = document.getElementById("stationStatus");
@@ -74,6 +83,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const closeSheetBtn = document.getElementById("closeSheetBtn");
   const addProofBtn = document.getElementById("addProofBtn");
 
+  // modal
   const modal = document.getElementById("modal");
   const closeModalBtn = document.getElementById("closeModalBtn");
   const photoInputFile = document.getElementById("photoInputFile");
@@ -85,8 +95,37 @@ window.addEventListener("DOMContentLoaded", () => {
   const commentInput = document.getElementById("commentInput");
   const saveProofBtn = document.getElementById("saveProofBtn");
 
+  // 要素チェック（足りないとき分かるように）
+  const required = [
+    ["oedoSvg", svg],
+    ["toggleEditBtn", toggleEditBtn],
+    ["copyJsonBtn", copyJsonBtn],
+    ["downloadJsonBtn", downloadJsonBtn],
+    ["editorHint", editorHint],
+    ["gridToggle", gridToggle],
+    ["snapToggle", snapToggle],
+  ];
+  for (const [id, el] of required) {
+    if (!el) {
+      alert(`HTMLに要素 #${id} が見つかりません（編集バーの追加漏れかも）`);
+      return;
+    }
+  }
+
   // =========================
-  // 4) Helpers
+  // 4) Grid settings
+  // =========================
+  let showGrid = false;
+  let snapToGrid = true;
+  const GRID_SIZE = 20;   // 20pxごと
+  const GRID_BOLD = 100;  // 太線は100pxごと
+
+  // SVGの固定サイズ（viewBoxと合わせる）
+  const SVG_W = 1000;
+  const SVG_H = 700;
+
+  // =========================
+  // 5) Helpers
   // =========================
   function isVisited(stationId){
     return proofs.some(p => p.stationId === stationId);
@@ -94,18 +133,152 @@ window.addEventListener("DOMContentLoaded", () => {
   function countByStation(stationId){
     return proofs.filter(p => p.stationId === stationId).length;
   }
-
   function elNS(name){
     return document.createElementNS("http://www.w3.org/2000/svg", name);
   }
 
+  function stationsExportJson(){
+    const arr = stations.map(s => ({
+      id: s.id,
+      code: s.code,
+      name: s.name,
+      x: Math.round(s.x),
+      y: Math.round(s.y),
+    }));
+    return JSON.stringify(arr, null, 2);
+  }
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      alert("配置JSONをクリップボードにコピーしました！");
+    }catch{
+      // フォールバック
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("配置JSONをコピーしました！（フォールバック）");
+    }
+  }
+
+  function downloadText(filename, text){
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   // =========================
-  // 5) Render SVG route + stations
+  // 6) Edit mode (dragging)
   // =========================
+  let editMode = false;
+  let dragging = null; // { station, dx, dy }
+  let movedDuringDrag = false;
+
+  function setEditMode(on){
+    editMode = on;
+    toggleEditBtn.textContent = `編集モード：${editMode ? "ON" : "OFF"}`;
+    editorHint.textContent = editMode
+      ? "ON：駅をドラッグで移動。グリッド表示/吸着も可。終わったら「配置JSONをコピー」"
+      : "OFF：駅をタップして証を追加できます";
+  }
+
+  function svgPointFromClient(clientX, clientY){
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const p = pt.matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
+  }
+
+  function startDrag(station, evt){
+    movedDuringDrag = false;
+    const { x, y } = svgPointFromClient(evt.clientX, evt.clientY);
+    dragging = {
+      station,
+      dx: station.x - x,
+      dy: station.y - y,
+    };
+  }
+
+  function moveDrag(evt){
+    if (!dragging) return;
+    evt.preventDefault();
+
+    const { x, y } = svgPointFromClient(evt.clientX, evt.clientY);
+
+    let newX = x + dragging.dx;
+    let newY = y + dragging.dy;
+
+    if (snapToGrid) {
+      newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+      newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+    }
+
+    // 画面外に飛びすぎないように軽く制限（任意）
+    newX = Math.max(20, Math.min(SVG_W - 20, newX));
+    newY = Math.max(20, Math.min(SVG_H - 20, newY));
+
+    dragging.station.x = newX;
+    dragging.station.y = newY;
+    movedDuringDrag = true;
+
+    renderSvg(true);
+  }
+
+  function endDrag(){
+    dragging = null;
+  }
+
+  // Pointer events（PC/タッチ両対応）
+  svg.addEventListener("pointermove", moveDrag, { passive: false });
+  window.addEventListener("pointerup", endDrag);
+
+  // =========================
+  // 7) Render SVG
+  // =========================
+  function renderGrid(){
+    // グリッドは編集モードONかつ表示ONのときだけ
+    if (!(editMode && showGrid)) return;
+
+    for (let x = 0; x <= SVG_W; x += GRID_SIZE) {
+      const line = elNS("line");
+      line.setAttribute("x1", x);
+      line.setAttribute("y1", 0);
+      line.setAttribute("x2", x);
+      line.setAttribute("y2", SVG_H);
+      line.setAttribute("class", x % GRID_BOLD === 0 ? "gridBold" : "gridLine");
+      svg.appendChild(line);
+    }
+
+    for (let y = 0; y <= SVG_H; y += GRID_SIZE) {
+      const line = elNS("line");
+      line.setAttribute("x1", 0);
+      line.setAttribute("y1", y);
+      line.setAttribute("x2", SVG_W);
+      line.setAttribute("y2", y);
+      line.setAttribute("class", y % GRID_BOLD === 0 ? "gridBold" : "gridLine");
+      svg.appendChild(line);
+    }
+  }
+
   function renderSvg(){
     svg.innerHTML = "";
 
-    // 背景の薄い枠
+    // グリッド（必要なら最背面に描画）
+    renderGrid();
+
+    // 背景枠
     const bg = elNS("rect");
     bg.setAttribute("x", "24");
     bg.setAttribute("y", "24");
@@ -116,18 +289,18 @@ window.addEventListener("DOMContentLoaded", () => {
     bg.setAttribute("stroke", "rgba(255,255,255,.06)");
     svg.appendChild(bg);
 
-    // 路線（駅を順につないだ polyline）
+    // 路線（駅順に接続）
     const pts = stations.map(s => `${s.x},${s.y}`).join(" ");
     const line = elNS("polyline");
-    line.setAttribute("points", pts + " " + `${stations[0].x},${stations[0].y}`); // ループっぽく戻す
+    line.setAttribute("points", pts + " " + `${stations[0].x},${stations[0].y}`);
     line.setAttribute("class", "routeLine");
     svg.appendChild(line);
 
-    // 駅ノード
+    // 駅
     stations.forEach((s) => {
       const g = elNS("g");
-      g.setAttribute("class", "stationNode");
-      g.style.cursor = "pointer";
+      g.setAttribute("class", `stationNode${editMode ? " editing" : ""}`);
+      g.style.cursor = editMode ? "grab" : "pointer";
 
       const outer = elNS("circle");
       outer.setAttribute("cx", s.x);
@@ -145,7 +318,7 @@ window.addEventListener("DOMContentLoaded", () => {
       inner.setAttribute("fill", "rgba(0,0,0,0)");
       inner.setAttribute("stroke", visited ? "var(--ok)" : "var(--accent)");
 
-      // ラベル（常時表示）
+      // ラベル
       const label = elNS("text");
       label.setAttribute("x", s.x + 16);
       label.setAttribute("y", s.y - 2);
@@ -158,8 +331,25 @@ window.addEventListener("DOMContentLoaded", () => {
       code.setAttribute("class", "stationCode");
       code.textContent = s.code;
 
-      // クリック
-      const onClick = () => openSheet(s);
+      // クリック/ドラッグ
+      const onPointerDown = (evt) => {
+        if (!editMode) return;
+        evt.preventDefault();
+        evt.stopPropagation();
+        g.setPointerCapture?.(evt.pointerId);
+        startDrag(s, evt);
+      };
+
+      const onClick = () => {
+        // ドラッグで動かした直後のclickを無視
+        if (editMode) {
+          if (movedDuringDrag) return;
+          return;
+        }
+        openSheet(s);
+      };
+
+      g.addEventListener("pointerdown", onPointerDown);
       g.addEventListener("click", onClick);
       label.addEventListener("click", onClick);
       code.addEventListener("click", onClick);
@@ -173,9 +363,10 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================
-  // 6) Sheet
+  // 8) Sheet
   // =========================
   function openSheet(station){
+    if (editMode) return;
     selectedStation = station;
 
     stationName.textContent = `${station.name}（${station.code}）`;
@@ -189,11 +380,10 @@ window.addEventListener("DOMContentLoaded", () => {
   function closeSheet(){
     sheet.classList.add("hidden");
   }
-
   closeSheetBtn.addEventListener("click", closeSheet);
 
   // =========================
-  // 7) Proof list (with delete)
+  // 9) Proof list (with delete)
   // =========================
   function renderProofs(){
     proofList.innerHTML = "";
@@ -242,7 +432,6 @@ window.addEventListener("DOMContentLoaded", () => {
         proofs = proofs.filter(x => x.id !== p.id);
         saveProofs();
 
-        // SVGも更新（達成色）
         renderSvg();
         renderProofs();
 
@@ -256,14 +445,18 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================
-  // 8) Modal
+  // 10) Modal
   // =========================
   function openModal(){
+    if (editMode) {
+      alert("編集モード中は証追加できません。OFFにしてください。");
+      return;
+    }
     if (!selectedStation){
       alert("先に駅をタップして選んでください。");
       return;
     }
-    // 初期化
+
     photoInputFile.value = "";
     photoInputCamera.value = "";
     photoPreviewWrap.classList.add("hidden");
@@ -287,7 +480,7 @@ window.addEventListener("DOMContentLoaded", () => {
   modal.querySelector(".modal__backdrop").addEventListener("click", closeModal);
 
   // =========================
-  // 9) Photo preview
+  // 11) Photo preview
   // =========================
   function preview(file){
     const reader = new FileReader();
@@ -320,7 +513,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================
-  // 10) Save proof
+  // 12) Save proof
   // =========================
   saveProofBtn.addEventListener("click", () => {
     const file = photoInputFile.files?.[0] || photoInputCamera.files?.[0];
@@ -329,7 +522,6 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // localStorage容量対策（試作）
     if (file.size > 3 * 1024 * 1024){
       alert("写真サイズが大きすぎます（3MB以下推奨）。");
       return;
@@ -348,7 +540,6 @@ window.addEventListener("DOMContentLoaded", () => {
       saveProofs();
       closeModal();
 
-      // SVGの達成色更新
       renderSvg();
       renderProofs();
 
@@ -359,7 +550,41 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================
-  // 11) Initial render
+  // 13) Editor bar actions
+  // =========================
+  setEditMode(false);
+  gridToggle.checked = false;
+  snapToggle.checked = true;
+  showGrid = gridToggle.checked;
+  snapToGrid = snapToggle.checked;
+
+  toggleEditBtn.addEventListener("click", () => {
+    setEditMode(!editMode);
+    if (editMode) closeSheet();
+    renderSvg();
+  });
+
+  copyJsonBtn.addEventListener("click", async () => {
+    const json = stationsExportJson();
+    await copyToClipboard(json);
+  });
+
+  downloadJsonBtn.addEventListener("click", () => {
+    const json = stationsExportJson();
+    downloadText("oedo_stations_layout.json", json);
+  });
+
+  gridToggle.addEventListener("change", () => {
+    showGrid = gridToggle.checked;
+    renderSvg();
+  });
+
+  snapToggle.addEventListener("change", () => {
+    snapToGrid = snapToggle.checked;
+  });
+
+  // =========================
+  // 14) Initial render
   // =========================
   renderSvg();
 });
