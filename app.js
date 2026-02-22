@@ -797,6 +797,8 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   saveProofBtn?.addEventListener("click", () => {
+    e.preventDefault();
+    e.stopPropagation();
     const file = photoInputFile.files?.[0] || photoInputCamera.files?.[0];
     if (!file){
       alert("写真は必須です。アルバムかカメラで選んでください。");

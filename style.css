@@ -354,6 +354,7 @@ body{
   position:absolute;
   inset:0;
   background: rgba(0,0,0,.40);
+  z-index: 0;
 }
 
 .modal__panel{
@@ -375,6 +376,7 @@ body{
   /* ヘッダー/ボディ/フッター固定レイアウト */
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
 /* モーダル上部の薄いアクセントライン（路線色） */
