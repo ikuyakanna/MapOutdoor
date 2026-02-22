@@ -22,48 +22,48 @@ window.addEventListener("DOMContentLoaded", () => {
   // 1) Stations（全38駅）※最新JSON（縦長キャンバス座標）
   // =========================
   const stations = [
-    { id:"E-01", code:"E-01", name:"新宿西口", x:120, y:420 },
-    { id:"E-02", code:"E-02", name:"東新宿", x:180, y:420 },
-    { id:"E-03", code:"E-03", name:"若松河田", x:240, y:420 },
-    { id:"E-04", code:"E-04", name:"牛込柳町", x:300, y:420 },
+    { id:"E-01", code:"E-01", name:"新宿西口", x:140, y:420 },
+    { id:"E-02", code:"E-02", name:"東新宿", x:200, y:420 },
+    { id:"E-03", code:"E-03", name:"若松河田", x:260, y:420 },
+    { id:"E-04", code:"E-04", name:"牛込柳町", x:320, y:420 },
 
-    { id:"E-05", code:"E-05", name:"牛込神楽坂", x:300, y:460 },
-    { id:"E-06", code:"E-06", name:"飯田橋", x:300, y:500 },
-    { id:"E-07", code:"E-07", name:"春日", x:300, y:540 },
-    { id:"E-08", code:"E-08", name:"本郷三丁目", x:300, y:580 },
-    { id:"E-09", code:"E-09", name:"上野御徒町", x:300, y:620 },
-    { id:"E-10", code:"E-10", name:"新御徒町", x:300, y:660 },
-    { id:"E-11", code:"E-11", name:"蔵前", x:300, y:700 },
-    { id:"E-12", code:"E-12", name:"両国", x:300, y:740 },
-    { id:"E-13", code:"E-13", name:"森下", x:300, y:780 },
-    { id:"E-14", code:"E-14", name:"清澄白河", x:300, y:820 },
+    { id:"E-05", code:"E-05", name:"牛込神楽坂", x:320, y:460 },
+    { id:"E-06", code:"E-06", name:"飯田橋", x:320, y:500 },
+    { id:"E-07", code:"E-07", name:"春日", x:320, y:540 },
+    { id:"E-08", code:"E-08", name:"本郷三丁目", x:320, y:580 },
+    { id:"E-09", code:"E-09", name:"上野御徒町", x:320, y:620 },
+    { id:"E-10", code:"E-10", name:"新御徒町", x:320, y:660 },
+    { id:"E-11", code:"E-11", name:"蔵前", x:320, y:700 },
+    { id:"E-12", code:"E-12", name:"両国", x:320, y:740 },
+    { id:"E-13", code:"E-13", name:"森下", x:320, y:780 },
+    { id:"E-14", code:"E-14", name:"清澄白河", x:320, y:820 },
 
-    { id:"E-15", code:"E-15", name:"門前仲町", x:240, y:820 },
-    { id:"E-16", code:"E-16", name:"月島", x:180, y:820 },
-    { id:"E-17", code:"E-17", name:"勝どき", x:120, y:820 },
-    { id:"E-18", code:"E-18", name:"築地市場", x:60, y:820 },
+    { id:"E-15", code:"E-15", name:"門前仲町", x:260, y:820 },
+    { id:"E-16", code:"E-16", name:"月島", x:200, y:820 },
+    { id:"E-17", code:"E-17", name:"勝どき", x:140, y:820 },
+    { id:"E-18", code:"E-18", name:"築地市場", x:80, y:820 },
 
-    { id:"E-19", code:"E-19", name:"汐留", x:60, y:780 },
-    { id:"E-20", code:"E-20", name:"大門", x:60, y:740 },
-    { id:"E-21", code:"E-21", name:"赤羽橋", x:60, y:700 },
-    { id:"E-22", code:"E-22", name:"麻布十番", x:60, y:660 },
-    { id:"E-23", code:"E-23", name:"六本木", x:60, y:620 },
-    { id:"E-24", code:"E-24", name:"青山一丁目", x:60, y:580 },
-    { id:"E-25", code:"E-25", name:"国立競技場", x:60, y:540 },
-    { id:"E-26", code:"E-26", name:"代々木", x:60, y:500 },
-    { id:"E-27", code:"E-27", name:"新宿", x:60, y:460 },
-    { id:"E-28", code:"E-28", name:"都庁前", x:60, y:420 },
+    { id:"E-19", code:"E-19", name:"汐留", x:80, y:780 },
+    { id:"E-20", code:"E-20", name:"大門", x:80, y:740 },
+    { id:"E-21", code:"E-21", name:"赤羽橋", x:80, y:700 },
+    { id:"E-22", code:"E-22", name:"麻布十番", x:80, y:660 },
+    { id:"E-23", code:"E-23", name:"六本木", x:80, y:620 },
+    { id:"E-24", code:"E-24", name:"青山一丁目", x:80, y:580 },
+    { id:"E-25", code:"E-25", name:"国立競技場", x:80, y:540 },
+    { id:"E-26", code:"E-26", name:"代々木", x:80, y:500 },
+    { id:"E-27", code:"E-27", name:"新宿", x:80, y:460 },
+    { id:"E-28", code:"E-28", name:"都庁前", x:80, y:420 },
 
-    { id:"E-29", code:"E-29", name:"西新宿五丁目", x:60, y:380 },
-    { id:"E-30", code:"E-30", name:"中野坂上", x:60, y:340 },
-    { id:"E-31", code:"E-31", name:"東中野", x:60, y:300 },
-    { id:"E-32", code:"E-32", name:"中井", x:60, y:260 },
-    { id:"E-33", code:"E-33", name:"落合南長崎", x:60, y:220 },
-    { id:"E-34", code:"E-34", name:"新江古田", x:60, y:180 },
-    { id:"E-35", code:"E-35", name:"練馬", x:60, y:140 },
-    { id:"E-36", code:"E-36", name:"豊島園", x:60, y:100 },
-    { id:"E-37", code:"E-37", name:"練馬春日町", x:60, y:60 },
-    { id:"E-38", code:"E-38", name:"光が丘", x:60, y:20 },
+    { id:"E-29", code:"E-29", name:"西新宿五丁目", x:80, y:380 },
+    { id:"E-30", code:"E-30", name:"中野坂上", x:80, y:340 },
+    { id:"E-31", code:"E-31", name:"東中野", x:80, y:300 },
+    { id:"E-32", code:"E-32", name:"中井", x:80, y:260 },
+    { id:"E-33", code:"E-33", name:"落合南長崎", x:80, y:220 },
+    { id:"E-34", code:"E-34", name:"新江古田", x:80, y:180 },
+    { id:"E-35", code:"E-35", name:"練馬", x:80, y:140 },
+    { id:"E-36", code:"E-36", name:"豊島園", x:80, y:100 },
+    { id:"E-37", code:"E-37", name:"練馬春日町", x:80, y:60 },
+    { id:"E-38", code:"E-38", name:"光が丘", x:80, y:20 },
   ];
 
   // =========================
@@ -132,7 +132,7 @@ window.addEventListener("DOMContentLoaded", () => {
     // ★ 親の箱ごと消す（これが決定打）
     hideEl(editorBar);
 
-    // 念のため：個別の要素も消す（HTML構造が違っても残骸が出ないように）
+    // 念のため：個別の要素も消す
     hideEl(toggleEditBtn);
     hideEl(copyJsonBtn);
     hideEl(downloadJsonBtn);
@@ -270,10 +270,13 @@ window.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("pointerup", endDrag);
 
   // =========================
-  // 7) ラベル配置
+  // 7) ラベル配置（被り対策）
   // =========================
   function labelPlacement(st){
-    // ★ 例外：築地市場（E-18）は左に出す（最優先でreturn）
+    const n = parseInt(st.id.replace("E-", ""), 10);
+    const alt = (n % 2 === 0) ? 18 : -18; // ★上段/下段の横並び用の左右ズラし
+
+    // ★ 例外：築地市場（E-18）は左に出す（最優先）
     if (st.id === "E-18") {
       return {
         nameDx: -18,
@@ -284,46 +287,48 @@ window.addEventListener("DOMContentLoaded", () => {
       };
     }
 
-    // 上段（y=420, x=120..300）：上に出す（ズレないように揃える）
-    if (st.y === 420 && st.x >= 120) {
+    // 上段（E-01〜E-04）：上へ＋左右交互（被り回避）
+    if (st.y === 420 && st.x >= 140) {
       return {
-        nameDx: 0,
+        nameDx: alt,
         nameDy: -18,
-        codeDx: 0,
+        codeDx: alt,
         codeDy: -34,
         anchor: "middle",
       };
     }
 
-    // 下段（E-15〜E-18のうち E-18 は上の例外で処理済み）
-    if (st.y === 820 && st.x <= 240) {
+    // 下段（E-15〜E-17）：上へ＋左右交互（E-18は例外で左へ）
+    if (st.y === 820 && st.x <= 260) {
       return {
-        nameDx: 0,
+        nameDx: alt,
         nameDy: -18,
-        codeDx: 0,
+        codeDx: alt,
         codeDy: -34,
         anchor: "middle",
       };
     }
 
-    // 右縦（x=300）：右へ
-    if (st.x === 300) {
+    // 右縦（x=320）：右へ（外側）
+    if (st.x === 320) {
+      const wobble = (n % 2 === 0) ? 6 : -6; // 縦並びの視認性アップ
       return {
         nameDx: 18,
-        nameDy: 5,
+        nameDy: wobble,
         codeDx: 18,
-        codeDy: 16,
+        codeDy: 16 + wobble,
         anchor: "start",
       };
     }
 
-    // 左縦（x=60）：左へ
-    if (st.x === 60) {
+    // 左縦（x=80）：左へ（外側）
+    if (st.x === 80) {
+      const wobble = (n % 2 === 0) ? 6 : -6;
       return {
         nameDx: -18,
-        nameDy: 5,
+        nameDy: wobble,
         codeDx: -18,
-        codeDy: 16,
+        codeDy: 16 + wobble,
         anchor: "end",
       };
     }
