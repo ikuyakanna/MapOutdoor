@@ -108,22 +108,52 @@ function renderProofList(stationProofs) {
     const card = document.createElement("div");
     card.className = "proofCard";
 
+    // 日付
     const meta = document.createElement("div");
     meta.className = "proofMeta";
     meta.textContent = new Date(p.createdAt).toLocaleString("ja-JP");
 
+    // 画像
     const img = document.createElement("img");
     img.className = "proofImg";
     img.src = p.photoDataUrl;
     img.alt = "証の写真";
 
+    // コメント
     const comment = document.createElement("div");
     comment.className = "proofComment";
-    comment.textContent = p.comment?.trim() ? p.comment.trim() : "（コメントなし）";
+    comment.textContent = p.comment?.trim()
+      ? p.comment.trim()
+      : "（コメントなし）";
 
+    // 削除ボタン
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn btn--ghost";
+    delBtn.type = "button";
+    delBtn.textContent = "削除";
+    delBtn.style.marginTop = "10px";
+
+    delBtn.addEventListener("click", () => {
+      const ok = confirm("この証を削除しますか？");
+      if (!ok) return;
+
+      // 全proofsから該当IDを削除
+      proofs = proofs.filter(x => x.id !== p.id);
+      saveProofs(proofs);
+      proofsMap = proofsByStation(proofs);
+
+      // マーカー再描画（達成状態更新）
+      renderMarkers();
+
+      // シート再描画
+      openSheet(selectedStation);
+    });
+
+   // カードに追加
     card.appendChild(meta);
     card.appendChild(img);
     card.appendChild(comment);
+    card.appendChild(delBtn);
 
     proofListEl.appendChild(card);
   }
@@ -282,7 +312,13 @@ function renderMarkers() {
       });
 
     // TooltipはあってもOK（不要なら削除）
-    m.bindTooltip(`${s.name}${visited ? "（達成）" : ""}`, { direction: "top" });
+    m.bindTooltip(`${s.name}${visited ? "（達成）" : ""}`, {
+    permanent: true,
+    direction: "top",
+    offset: [0, -18],
+    opacity: 0.95,
+    className: "stationLabel",
+    });
     markers.set(s.id, m);
   }
 }
