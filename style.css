@@ -1,286 +1,360 @@
 :root{
-  --bg:#0b0f17;
-  --panel:#121a29;
-  --panel2:#0f1623;
-  --text:#e8eefc;
-  --muted:#9fb0d0;
-  --accent:#b6007a; /* 大江戸線マゼンタ */
-  --danger:#ff4d4d;
-  --ok:#39d98a;
+  --bg: #0b0b0f;
+  --card: rgba(255,255,255,.06);
+  --card2: rgba(255,255,255,.04);
+  --stroke: rgba(255,255,255,.10);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.62);
+  --ok: #35d07f;
+
+  /* 路線カラー（JSで路線選択時に更新） */
+  --line: #b36bff;
 }
 
-*{ box-sizing:border-box; }
-html,body{
-  height:100%;
+*{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
-  background:var(--bg);
-  color:var(--text);
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", "Meiryo", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-
-.topbar{
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  background: linear-gradient(180deg, rgba(182,0,122,.18), rgba(0,0,0,0));
-}
-.title{ font-weight: 800; font-size: 16px; }
-.subtitle{ font-size: 12px; color:var(--muted); margin-top:4px; }
-
-.main{
-  height: calc(100% - 56px);
-  position: relative;
-}
-
-.mapWrap{
-  height: 100%;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-  display:flex;
-  align-items:stretch;
-  justify-content:stretch;
-}
-
-/* SVGは画面にフィット */
-.oedoSvg{
-  width: 100%;
-  height: 100%;
-  display:block;
-  background:
-    radial-gradient(1200px 700px at 40% 30%, rgba(182,0,122,.10), rgba(0,0,0,0)),
-    radial-gradient(900px 600px at 70% 60%, rgba(120,160,255,.06), rgba(0,0,0,0));
-}
-
-/* クリックしやすく */
-svg text{ user-select: none; }
-
-.btn{
-  border: none;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.btn--primary{ background: var(--accent); color: white; }
-.btn--ghost{ background: rgba(255,255,255,.08); color: var(--text); }
 
 .hidden{ display:none !important; }
 
-/* --- 駅詳細シート --- */
-.sheet{
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  z-index: 10000; /* 前面 */
-  background: rgba(18,26,41,.96);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 16px;
-  padding: 10px 12px 14px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.5);
-  max-height: 60%;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+/* ===== Main ===== */
+.main{
+  padding: 64px 12px 18px;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
-.sheet__handle{
-  width: 44px; height: 5px; border-radius: 99px;
-  background: rgba(255,255,255,.22);
-  margin: 2px auto 10px;
+.routeSvg{
+  width: 100%;
+  height: auto;
+  display:block;
+  /* 枠が見えるのを避けるため背景は透明 */
+  background: transparent;
+}
+
+/* ===== SVG styles ===== */
+.routeLine{
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .85;
+}
+
+.routeSpur{
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .55;
+  stroke-dasharray: 6 10;
+}
+
+.stationOuter{
+  fill: rgba(0,0,0,.55);
+  stroke: rgba(255,255,255,.15);
+  stroke-width: 2;
+}
+
+.stationInner{
+  fill: rgba(0,0,0,0);
+  stroke-width: 3;
+}
+
+.stationLabel{
+  font-size: 12px;
+  fill: rgba(255,255,255,.92);
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.55);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stationCode{
+  font-size: 10px;
+  fill: rgba(255,255,255,.70);
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.55);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gridLine{
+  stroke: rgba(255,255,255,.06);
+  stroke-width: 1;
+}
+.gridBold{
+  stroke: rgba(255,255,255,.10);
+  stroke-width: 1;
+}
+
+/* ===== Buttons ===== */
+.btn{
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  cursor: pointer;
+}
+.btn--solid{
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.14);
+  font-weight: 800;
+}
+.btn--ghost{
+  background: rgba(0,0,0,.10);
+}
+.btn:active{ transform: translateY(1px); }
+
+/* ===== Menu UI ===== */
+.menuButton{
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 2600;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+}
+.menuButton span{
+  display:block;
+  width: 20px;
+  height: 2px;
+  background: rgba(255,255,255,.9);
+  border-radius: 999px;
+  margin: 2px 0;
+}
+
+.sideMenu{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: min(320px, 84vw);
+  height: 100vh;
+  z-index: 2700;
+  background: rgba(12,12,14,.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-right: 1px solid rgba(255,255,255,.10);
+  transform: translateX(-102%);
+  transition: transform .18s ease;
+  overflow: auto;
+  padding: 14px;
+}
+.sideMenu.open{ transform: translateX(0); }
+
+.sideMenu__header{
+  padding: 8px 6px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 10px;
+}
+.sideMenu__title{ font-weight: 900; font-size: 16px; }
+.sideMenu__sub{ margin-top: 4px; font-size: 12px; color: rgba(255,255,255,.65); }
+
+.overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 2650;
+  background: rgba(0,0,0,.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.overlay.show{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lineList{ display: grid; gap: 10px; }
+.lineRow{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+}
+.lineRow:active{ transform: translateY(1px); }
+.lineRow.active{
+  outline: 2px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+}
+.lineName{ font-weight: 900; font-size: 14px; }
+.lineRate{
+  font-size: 12px;
+  color: rgba(255,255,255,.80);
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.25);
+  white-space: nowrap;
+}
+
+/* ===== Editor bar ===== */
+.editorBar{
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 2500;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  width: min(360px, calc(100vw - 76px));
+}
+.chk{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,.80);
+}
+.editorHint{
+  font-size: 12px;
+  color: rgba(255,255,255,.70);
+  line-height: 1.4;
+}
+
+/* ===== Empty state ===== */
+.emptyState{
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1500;
+  color: rgba(255,255,255,.75);
+  font-weight: 800;
+  pointer-events: none;
+}
+
+/* ===== Sheet ===== */
+.sheet{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2400;
+  background: rgba(12,12,14,.96);
+  border-top: 1px solid rgba(255,255,255,.10);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  padding: 14px;
+  max-height: 70vh;
+  overflow: auto;
 }
 .sheet__header{
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
   gap: 10px;
 }
-.sheet__title{ font-size: 18px; font-weight: 900; }
-.sheet__status{ font-size: 12px; margin-top:2px; color: var(--muted); }
-.sheet__actions{ margin-top: 10px; }
-.sheet__section{ margin-top: 14px; }
-.sheet__sectionTitle{ font-weight: 900; margin-bottom: 10px; }
+.sheet__title{ font-weight: 900; font-size: 16px; }
+.sheet__sub{ color: var(--muted); font-size: 12px; margin-top: 4px; }
+.sheet__actions{ margin: 10px 0 12px; }
 
-.proofList{ display:flex; flex-direction: column; gap: 10px; }
+.proofList{ display: grid; gap: 12px; padding-bottom: 10px; }
 .proofCard{
-  background: rgba(15,22,35,.9);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  padding: 10px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  padding: 12px;
 }
 .proofImg{
   width: 100%;
-  border-radius: 10px;
+  height: auto;
   display:block;
-  border: 1px solid rgba(255,255,255,.08);
-  max-height: 45vh;
-  object-fit: contain;
-  background: rgba(0,0,0,.25);
+  border-radius: 12px;
+  margin-top: 10px;
 }
 
-/* --- 投稿モーダル（固定） --- */
+/* ===== Modal ===== */
 .modal{
   position: fixed;
   inset: 0;
-  z-index: 20000;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  padding: 10px;
+  z-index: 2450;
+  display: grid;
+  place-items: center;
 }
 .modal__backdrop{
-  position: fixed;
+  position:absolute;
   inset:0;
   background: rgba(0,0,0,.55);
 }
 .modal__panel{
   position: relative;
-  width: min(640px, 100%);
-  background: rgba(18,26,41,.98);
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  border: 1px solid rgba(255,255,255,.10);
-  padding: 12px 14px 18px;
-  max-height: 85vh;
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(82vh, 820px);
   overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  background: rgba(12,12,14,.96);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
 }
-.modal__header{
+.modal__header, .modal__footer{
+  padding: 12px 12px;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.modal__title{ font-weight: 900; font-size: 16px; }
+.modal__footer{
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-bottom: none;
+}
+.modal__title{ font-weight: 900; }
+.modal__body{ padding: 12px; }
 
-.field{ display:block; margin-top: 12px; }
-.field__label{ font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.row{ margin-bottom: 12px; }
+.row__label{ font-size: 12px; color: rgba(255,255,255,.72); margin-bottom: 6px; }
+.row__controls{ display:flex; gap: 10px; flex-wrap: wrap; }
 
-textarea{
+.textarea{
   width: 100%;
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-  padding: 10px;
-}
-
-.photoButtons{
-  display:flex;
-  gap:10px;
-  flex-wrap: wrap;
-}
-
-.photoPreview{
-  margin-top: 10px;
-  border-radius: 12px;
-  overflow: auto;
-  border: 1px solid rgba(255,255,255,.10);
-  max-height: 45vh;
-  -webkit-overflow-scrolling: touch;
-}
-.photoPreview img{
-  width:100%;
-  display:block;
-  height:auto;
-  max-height: 45vh;
-  object-fit: contain;
-  background: rgba(0,0,0,.25);
-}
-.photoPreview__top{
-  position: sticky;
-  top: 0;
-  display: flex;
-  gap: 8px;
-  padding: 8px;
-  background: rgba(0,0,0,.35);
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  z-index: 2;
-}
-
-.form__row{ margin-top: 14px; display:flex; gap: 10px; align-items:center; }
-.formError{ color: var(--danger); font-size: 12px; font-weight: 700; }
-.hint{ margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.4; }
-
-/* --- SVG路線図の見た目 --- */
-.routeLine{
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 10;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: .95;
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,.45));
-}
-
-.stationNode{
-  cursor: pointer;
-}
-
-.stationOuter{
-  fill: rgba(0,0,0,.55);
-  stroke: rgba(255,255,255,.22);
-  stroke-width: 2;
-}
-
-.stationInner{
-  stroke-width: 3;
-}
-
-.stationLabel{
-  font-size: 14px;
-  font-weight: 900;
-  fill: rgba(232,238,252,.95);
-  paint-order: stroke;
-  stroke: rgba(0,0,0,.45);
-  stroke-width: 4;
-  stroke-linejoin: round;
-  cursor: pointer;
-}
-
-.stationCode{
-  font-size: 11px;
-  font-weight: 800;
-  fill: rgba(159,176,208,.95);
-  paint-order: stroke;
-  stroke: rgba(0,0,0,.45);
-  stroke-width: 4;
-  stroke-linejoin: round;
-  cursor: pointer;
-}
-
-/* ===== 編集バー ===== */
-.editorBar{
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  z-index: 9000;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 10px;
+  padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(18,26,41,.80);
   border: 1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
 }
 
-.editorHint{
-  font-size: 12px;
-  color: var(--muted);
+.photoPreviewWrap{
+  border: 1px dashed rgba(255,255,255,.14);
+  border-radius: 16px;
+  padding: 10px;
+  margin-bottom: 12px;
 }
-
-/* 編集モード中の駅：少し大きく見せる */
-.stationNode.editing .stationOuter{ stroke: rgba(255,255,255,.35); }
-.stationNode.editing .stationInner{ stroke-width: 4; }
-
-/* ===== グリッド（編集モード時） ===== */
-.gridLine{
-  stroke: rgba(255,255,255,.06);
-  stroke-width: 1;
+.photoPreviewBtns{
+  display:flex;
+  gap: 10px;
+  margin-bottom: 10px;
 }
-
-.gridBold{
-  stroke: rgba(255,255,255,.12);
-  stroke-width: 1.5;
+.photoPreviewInner img{
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display:block;
 }

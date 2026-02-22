@@ -1,89 +1,133 @@
-// 大江戸線 証アプリ（SVG簡易路線図 + 編集モード + グリッド）
+// 路線 証アプリ（SVG簡易路線図 + 複数路線 + 編集モード）
 // - 外部APIなし（無料運用向き）
-// - 駅クリック → 詳細シート
-// - 写真必須で証保存（削除可）
-// - 編集モードONで駅をドラッグして配置調整 → JSONコピー/保存
-// - 編集モード中：グリッド表示 & グリッド吸着（スナップ）
-// - 路線は環状に閉じない（E-38→E-01は繋がない）
-// - 支線として E-01(新宿西口) → E-28(都庁前) を線で追加
-// - ラベル被り軽減：区間ごとに外側へ＆上段/下段は交互にずらす
-// - iPhoneでは編集バーを完全非表示（親要素ごと消す / 編集機能も実質OFF）
-// - 例外：E-18 築地市場は駅名を左に出す
+// - 左上ハンバーガー → 路線一覧（起動時は開いた状態）
+// - 画面外タップで閉じる
+// - 未選択なら「路線図を選択してください」
+// - 路線行：路線名 + 達成率（達成駅数/全駅）
+// - 駅クリック → 詳細シート → 証追加（写真必須・削除可）
+// - 証の表示順：コメント → 写真 → 日付
+// - 編集モード（PC用）：駅ドラッグ、グリッド表示/スナップ、配置JSONコピー/DL
+// - 編集は「路線ごと」に保存（layout_<lineId>_v1）
+// - iPhoneでは編集バーを親ごと完全非表示（編集機能も実質OFF）
+// - 大江戸線の支線：E-01(新宿西口) → E-28(都庁前)
+// - 大江戸線の例外：E-18 築地市場は駅名を左に出す
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
-  // 0) Canvas size（iPhone縦長想定）
-  //  - index.html の <svg id="oedoSvg" viewBox="0 0 390 844"> と合わせる
+  // 0) Canvas size
   // =========================
   const SVG_W = 390;
   const SVG_H = 844;
 
   // =========================
-  // 1) Stations（全38駅）※最新JSON（縦長キャンバス座標）
+  // 1) Lines（ここに増やしていく）
+  //   color: 路線色（③）
   // =========================
-  const stations = [
-    { id:"E-01", code:"E-01", name:"新宿西口", x:140, y:420 },
-    { id:"E-02", code:"E-02", name:"東新宿", x:200, y:420 },
-    { id:"E-03", code:"E-03", name:"若松河田", x:260, y:420 },
-    { id:"E-04", code:"E-04", name:"牛込柳町", x:320, y:420 },
-
-    { id:"E-05", code:"E-05", name:"牛込神楽坂", x:320, y:460 },
-    { id:"E-06", code:"E-06", name:"飯田橋", x:320, y:500 },
-    { id:"E-07", code:"E-07", name:"春日", x:320, y:540 },
-    { id:"E-08", code:"E-08", name:"本郷三丁目", x:320, y:580 },
-    { id:"E-09", code:"E-09", name:"上野御徒町", x:320, y:620 },
-    { id:"E-10", code:"E-10", name:"新御徒町", x:320, y:660 },
-    { id:"E-11", code:"E-11", name:"蔵前", x:320, y:700 },
-    { id:"E-12", code:"E-12", name:"両国", x:320, y:740 },
-    { id:"E-13", code:"E-13", name:"森下", x:320, y:780 },
-    { id:"E-14", code:"E-14", name:"清澄白河", x:320, y:820 },
-
-    { id:"E-15", code:"E-15", name:"門前仲町", x:260, y:820 },
-    { id:"E-16", code:"E-16", name:"月島", x:200, y:820 },
-    { id:"E-17", code:"E-17", name:"勝どき", x:140, y:820 },
-    { id:"E-18", code:"E-18", name:"築地市場", x:80, y:820 },
-
-    { id:"E-19", code:"E-19", name:"汐留", x:80, y:780 },
-    { id:"E-20", code:"E-20", name:"大門", x:80, y:740 },
-    { id:"E-21", code:"E-21", name:"赤羽橋", x:80, y:700 },
-    { id:"E-22", code:"E-22", name:"麻布十番", x:80, y:660 },
-    { id:"E-23", code:"E-23", name:"六本木", x:80, y:620 },
-    { id:"E-24", code:"E-24", name:"青山一丁目", x:80, y:580 },
-    { id:"E-25", code:"E-25", name:"国立競技場", x:80, y:540 },
-    { id:"E-26", code:"E-26", name:"代々木", x:80, y:500 },
-    { id:"E-27", code:"E-27", name:"新宿", x:80, y:460 },
-    { id:"E-28", code:"E-28", name:"都庁前", x:80, y:420 },
-
-    { id:"E-29", code:"E-29", name:"西新宿五丁目", x:80, y:380 },
-    { id:"E-30", code:"E-30", name:"中野坂上", x:80, y:340 },
-    { id:"E-31", code:"E-31", name:"東中野", x:80, y:300 },
-    { id:"E-32", code:"E-32", name:"中井", x:80, y:260 },
-    { id:"E-33", code:"E-33", name:"落合南長崎", x:80, y:220 },
-    { id:"E-34", code:"E-34", name:"新江古田", x:80, y:180 },
-    { id:"E-35", code:"E-35", name:"練馬", x:80, y:140 },
-    { id:"E-36", code:"E-36", name:"豊島園", x:80, y:100 },
-    { id:"E-37", code:"E-37", name:"練馬春日町", x:80, y:60 },
-    { id:"E-38", code:"E-38", name:"光が丘", x:80, y:20 },
+  const lines = [
+    {
+      id: "oedo",
+      name: "都営大江戸線",
+      color: "#b36bff", // 紫
+      stations: [
+        { id:"E-01", code:"E-01", name:"新宿西口", x:140, y:420 },
+        { id:"E-02", code:"E-02", name:"東新宿", x:200, y:420 },
+        { id:"E-03", code:"E-03", name:"若松河田", x:260, y:420 },
+        { id:"E-04", code:"E-04", name:"牛込柳町", x:320, y:420 },
+        { id:"E-05", code:"E-05", name:"牛込神楽坂", x:320, y:460 },
+        { id:"E-06", code:"E-06", name:"飯田橋", x:320, y:500 },
+        { id:"E-07", code:"E-07", name:"春日", x:320, y:540 },
+        { id:"E-08", code:"E-08", name:"本郷三丁目", x:320, y:580 },
+        { id:"E-09", code:"E-09", name:"上野御徒町", x:320, y:620 },
+        { id:"E-10", code:"E-10", name:"新御徒町", x:320, y:660 },
+        { id:"E-11", code:"E-11", name:"蔵前", x:320, y:700 },
+        { id:"E-12", code:"E-12", name:"両国", x:320, y:740 },
+        { id:"E-13", code:"E-13", name:"森下", x:320, y:780 },
+        { id:"E-14", code:"E-14", name:"清澄白河", x:320, y:820 },
+        { id:"E-15", code:"E-15", name:"門前仲町", x:260, y:820 },
+        { id:"E-16", code:"E-16", name:"月島", x:200, y:820 },
+        { id:"E-17", code:"E-17", name:"勝どき", x:140, y:820 },
+        { id:"E-18", code:"E-18", name:"築地市場", x:80, y:820 },
+        { id:"E-19", code:"E-19", name:"汐留", x:80, y:780 },
+        { id:"E-20", code:"E-20", name:"大門", x:80, y:740 },
+        { id:"E-21", code:"E-21", name:"赤羽橋", x:80, y:700 },
+        { id:"E-22", code:"E-22", name:"麻布十番", x:80, y:660 },
+        { id:"E-23", code:"E-23", name:"六本木", x:80, y:620 },
+        { id:"E-24", code:"E-24", name:"青山一丁目", x:80, y:580 },
+        { id:"E-25", code:"E-25", name:"国立競技場", x:80, y:540 },
+        { id:"E-26", code:"E-26", name:"代々木", x:80, y:500 },
+        { id:"E-27", code:"E-27", name:"新宿", x:80, y:460 },
+        { id:"E-28", code:"E-28", name:"都庁前", x:80, y:420 },
+        { id:"E-29", code:"E-29", name:"西新宿五丁目", x:80, y:380 },
+        { id:"E-30", code:"E-30", name:"中野坂上", x:80, y:340 },
+        { id:"E-31", code:"E-31", name:"東中野", x:80, y:300 },
+        { id:"E-32", code:"E-32", name:"中井", x:80, y:260 },
+        { id:"E-33", code:"E-33", name:"落合南長崎", x:80, y:220 },
+        { id:"E-34", code:"E-34", name:"新江古田", x:80, y:180 },
+        { id:"E-35", code:"E-35", name:"練馬", x:80, y:140 },
+        { id:"E-36", code:"E-36", name:"豊島園", x:80, y:100 },
+        { id:"E-37", code:"E-37", name:"練馬春日町", x:80, y:60 },
+        { id:"E-38", code:"E-38", name:"光が丘", x:80, y:20 },
+      ],
+    },
+    {
+      id: "marunouchi",
+      name: "東京メトロ丸ノ内線",
+      color: "#ff3b30", // 赤
+      // 仮配置（編集モードで整えられます）
+      stations: [
+        { id:"M-01", code:"M-01", name:"池袋", x:200, y:40 },
+        { id:"M-02", code:"M-02", name:"新大塚", x:200, y:80 },
+        { id:"M-03", code:"M-03", name:"茗荷谷", x:200, y:120 },
+        { id:"M-04", code:"M-04", name:"後楽園", x:200, y:160 },
+        { id:"M-05", code:"M-05", name:"本郷三丁目", x:200, y:200 },
+        { id:"M-06", code:"M-06", name:"御茶ノ水", x:200, y:240 },
+        { id:"M-07", code:"M-07", name:"淡路町", x:200, y:280 },
+        { id:"M-08", code:"M-08", name:"大手町", x:200, y:320 },
+        { id:"M-09", code:"M-09", name:"東京", x:200, y:360 },
+        { id:"M-10", code:"M-10", name:"銀座", x:200, y:400 },
+        { id:"M-11", code:"M-11", name:"霞ヶ関", x:200, y:440 },
+        { id:"M-12", code:"M-12", name:"国会議事堂前", x:200, y:480 },
+        { id:"M-13", code:"M-13", name:"赤坂見附", x:200, y:520 },
+        { id:"M-14", code:"M-14", name:"四ツ谷", x:200, y:560 },
+        { id:"M-15", code:"M-15", name:"四谷三丁目", x:200, y:600 },
+        { id:"M-16", code:"M-16", name:"新宿御苑前", x:200, y:640 },
+        { id:"M-17", code:"M-17", name:"新宿三丁目", x:200, y:680 },
+        { id:"M-18", code:"M-18", name:"新宿", x:200, y:720 },
+        { id:"M-19", code:"M-19", name:"西新宿", x:200, y:760 },
+        { id:"M-20", code:"M-20", name:"中野坂上", x:200, y:800 },
+        { id:"M-21", code:"M-21", name:"新中野", x:160, y:820 },
+        { id:"M-22", code:"M-22", name:"東高円寺", x:120, y:840 },
+        { id:"M-23", code:"M-23", name:"新高円寺", x:80, y:820 },
+        { id:"M-24", code:"M-24", name:"南阿佐ケ谷", x:60, y:780 },
+        { id:"M-25", code:"M-25", name:"荻窪", x:60, y:740 },
+        // 支線（中野坂上→方南町）
+        { id:"M-26", code:"M-26", name:"中野新橋", x:240, y:820 },
+        { id:"M-27", code:"M-27", name:"中野富士見町", x:280, y:820 },
+        { id:"M-28", code:"M-28", name:"方南町", x:320, y:820 },
+      ],
+    }
   ];
 
   // =========================
-  // 2) Storage
+  // 2) Storage keys（路線ごと）
   // =========================
-  const STORAGE_KEY = "oedo_proofs_svg_v1";
-  let proofs = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  let selectedStation = null;
-
-  function saveProofs(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(proofs));
-  }
+  const proofKey = (lineId) => `proofs_${lineId}_v1`;
+  const layoutKey = (lineId) => `layout_${lineId}_v1`;
 
   // =========================
-  // 3) DOM refs
+  // 3) DOM
   // =========================
   const svg = document.getElementById("oedoSvg");
+  const emptyState = document.getElementById("emptyState");
 
-  // editor bar（編集UI）
-  const editorBar = document.getElementById("editorBar"); // ★親要素（ここを丸ごと消す）
+  // menu
+  const menuButton = document.getElementById("menuButton");
+  const sideMenu = document.getElementById("sideMenu");
+  const overlay = document.getElementById("overlay");
+  const lineList = document.getElementById("lineList");
+
+  // editor bar
+  const editorBar = document.getElementById("editorBar");
   const toggleEditBtn = document.getElementById("toggleEditBtn");
   const copyJsonBtn = document.getElementById("copyJsonBtn");
   const downloadJsonBtn = document.getElementById("downloadJsonBtn");
@@ -111,56 +155,114 @@ window.addEventListener("DOMContentLoaded", () => {
   const commentInput = document.getElementById("commentInput");
   const saveProofBtn = document.getElementById("saveProofBtn");
 
-  // 要素チェック（svgだけは必須）
   if (!svg) {
     alert("HTMLに #oedoSvg が見つかりません。");
     return;
   }
 
   // =========================
-  // 3.5) iPhoneでは編集バーを完全消滅させる
-  //  - ボタンだけ消すと「灰色の細い帯（親の箱）」が残るので、親ごと消す
+  // 4) iPhone判定：編集UI完全非表示
   // =========================
   const isIPhone = /iPhone|iPod/i.test(navigator.userAgent);
-
-  function hideEl(el){
-    if (!el) return;
-    el.style.display = "none";
-  }
-
   if (isIPhone) {
-    // ★ 親の箱ごと消す（これが決定打）
-    hideEl(editorBar);
-
-    // 念のため：個別の要素も消す
-    hideEl(toggleEditBtn);
-    hideEl(copyJsonBtn);
-    hideEl(downloadJsonBtn);
-    hideEl(editorHint);
-
-    hideEl(gridToggle?.closest("label") || gridToggle?.parentElement);
-    hideEl(snapToggle?.closest("label") || snapToggle?.parentElement);
+    if (editorBar) editorBar.style.display = "none";
   }
 
   // =========================
-  // 4) Grid settings
+  // 5) Menu open/close
   // =========================
+  function openMenu(){
+    sideMenu?.classList.add("open");
+    overlay?.classList.add("show");
+  }
+  function closeMenu(){
+    sideMenu?.classList.remove("open");
+    overlay?.classList.remove("show");
+  }
+
+  menuButton?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (sideMenu.classList.contains("open")) closeMenu();
+    else openMenu();
+  });
+
+  overlay?.addEventListener("click", () => {
+    closeMenu();
+    // 路線未選択のときはメッセージを出したい → emptyStateは常時制御してるのでここでは触らない
+  });
+
+  // =========================
+  // 6) State（路線切り替え用）
+  // =========================
+  let currentLine = null;      // {id,name,color,stations...}
+  let stations = [];           // 現在描画している stations（編集で変わる）
+  let proofs = [];             // 現在路線の proofs
+  let selectedStation = null;
+
+  // editor state
+  let editMode = false;
   let showGrid = false;
   let snapToGrid = true;
   const GRID_SIZE = 20;
   const GRID_BOLD = 100;
 
+  let dragging = null; // { station, dx, dy }
+  let movedDuringDrag = false;
+
   // =========================
-  // 5) Helpers
+  // 7) Helpers
   // =========================
+  function elNS(name){
+    return document.createElementNS("http://www.w3.org/2000/svg", name);
+  }
+
+  function setLineColor(color){
+    document.documentElement.style.setProperty("--line", color);
+  }
+
+  function loadProofs(lineId){
+    proofs = JSON.parse(localStorage.getItem(proofKey(lineId)) || "[]");
+  }
+  function saveProofs(){
+    if (!currentLine) return;
+    localStorage.setItem(proofKey(currentLine.id), JSON.stringify(proofs));
+  }
+
+  // ④ 路線ごとにレイアウト保存
+  function loadLayout(line){
+    const raw = localStorage.getItem(layoutKey(line.id));
+    if (!raw) return line.stations.map(s => ({...s}));
+    try{
+      const arr = JSON.parse(raw);
+      // id一致で上書き（name/codeは念のため維持）
+      const byId = new Map(arr.map(x => [x.id, x]));
+      return line.stations.map(s => {
+        const p = byId.get(s.id);
+        if (!p) return ({...s});
+        return ({...s, x: Number(p.x), y: Number(p.y) });
+      });
+    }catch{
+      return line.stations.map(s => ({...s}));
+    }
+  }
+  function saveLayout(){
+    if (!currentLine) return;
+    const arr = stations.map(s => ({
+      id: s.id, code: s.code, name: s.name, x: Math.round(s.x), y: Math.round(s.y)
+    }));
+    localStorage.setItem(layoutKey(currentLine.id), JSON.stringify(arr));
+  }
+
   function isVisited(stationId){
     return proofs.some(p => p.stationId === stationId);
   }
   function countByStation(stationId){
     return proofs.filter(p => p.stationId === stationId).length;
   }
-  function elNS(name){
-    return document.createElementNS("http://www.w3.org/2000/svg", name);
+  function visitedStationCount(line){
+    const p = JSON.parse(localStorage.getItem(proofKey(line.id)) || "[]");
+    return new Set(p.map(x => x.stationId)).size;
   }
 
   function stationsExportJson(){
@@ -202,18 +304,16 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================
-  // 6) Edit mode (dragging)
+  // 8) Edit mode / dragging
   // =========================
-  let editMode = false;
-  let dragging = null; // { station, dx, dy }
-  let movedDuringDrag = false;
-
   function setEditMode(on){
     editMode = on;
+
     if (toggleEditBtn) toggleEditBtn.textContent = `編集モード：${editMode ? "ON" : "OFF"}`;
+
     if (editorHint) {
       editorHint.textContent = editMode
-        ? "ON：駅をドラッグで移動。グリッド表示/吸着も可。終わったら「配置JSONをコピー」"
+        ? "ON：駅をドラッグで移動。グリッド/スナップも可。終わったら「配置JSONをコピー」"
         : "OFF：駅をタップして証を追加できます";
     }
   }
@@ -263,6 +363,10 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function endDrag(){
+    if (dragging) {
+      // ④：路線ごとの配置を随時保存
+      saveLayout();
+    }
     dragging = null;
   }
 
@@ -270,79 +374,33 @@ window.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("pointerup", endDrag);
 
   // =========================
-  // 7) ラベル配置（被り対策）
+  // 9) ラベル配置（路線ごとに分岐してOK）
   // =========================
-  function labelPlacement(st){
-    const n = parseInt(st.id.replace("E-", ""), 10);
-
-    // ★ 例外：築地市場（E-18）は左に出す（最優先）
-    if (st.id === "E-18") {
-      return {
-        nameDx: -18,
-        nameDy: 5,
-        codeDx: -18,
-        codeDy: 16,
-        anchor: "end",
-      };
+  function labelPlacement(lineId, st){
+    // 大江戸線：築地市場は左
+    if (lineId === "oedo" && st.id === "E-18") {
+      return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
     }
 
-    // 上段（E-01〜E-04）：上へ＋左右交互（被り回避）
-    if (st.y === 420 && st.x >= 140) {
-      return {
-        nameDx: 0,
-        nameDy: -18,
-        codeDx: 0,
-        codeDy: -34,
-        anchor: "middle",
-      };
+    // ざっくり：左右どちらかに逃がす（被り軽減）
+    // 左側（xが小さい）→左、右側（xが大きい）→右、上段/下段→上
+    if (st.y <= 80) {
+      return { nameDx: 0, nameDy: 18, codeDx: 0, codeDy: 32, anchor: "middle" };
     }
 
-    // 下段（E-15〜E-17）：上へ＋左右交互（E-18は例外で左へ）
-    if (st.y === 820 && st.x <= 260) {
-      return {
-        nameDx: 0,
-        nameDy: -18,
-        codeDx: 0,
-        codeDy: -34,
-        anchor: "middle",
-      };
+    if (st.x <= 90) {
+      return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
+    }
+    if (st.x >= 300) {
+      return { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
     }
 
-    // 右縦（x=320）：右へ（外側）
-    if (st.x === 320) {
-      return {
-        nameDx: 18,
-        nameDy: 5,
-        codeDx: 18,
-        codeDy: 16,
-        anchor: "start",
-      };
-    }
-
-    // 左縦（x=80）：左へ（外側）
-    if (st.x === 80) {
-      const wobble = (n % 2 === 0) ? 6 : -6;
-      return {
-        nameDx: -18,
-        nameDy: 5,
-        codeDx: -18,
-        codeDy: 16,
-        anchor: "end",
-      };
-    }
-
-    // デフォルト
-    return {
-      nameDx: 0,
-      nameDy: -18,
-      codeDx: 0,
-      codeDy: -34,
-      anchor: "middle",
-    };
+    // 上段/下段は上へ
+    return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
   }
 
   // =========================
-  // 8) Render SVG
+  // 10) Render
   // =========================
   function renderGrid(){
     if (!(editMode && showGrid)) return;
@@ -370,44 +428,35 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function renderSvg(){
     svg.innerHTML = "";
-
     renderGrid();
 
-    // 背景枠
-    // const bg = elNS("rect");
-    // bg.setAttribute("x", "16");
-    // bg.setAttribute("y", "16");
-    // bg.setAttribute("width", String(SVG_W - 32));
-    // bg.setAttribute("height", String(SVG_H - 32));
-    // bg.setAttribute("rx", "22");
-    // bg.setAttribute("fill", "rgba(255,255,255,.03)");
-    // bg.setAttribute("stroke", "rgba(255,255,255,.06)");
-    // svg.appendChild(bg);
+    if (!currentLine) return;
 
     // 路線（環状に閉じない）
     const pts = stations.map(s => `${s.x},${s.y}`).join(" ");
-    const line = elNS("polyline");
-    line.setAttribute("points", pts);
-    line.setAttribute("class", "routeLine");
-    svg.appendChild(line);
+    const route = elNS("polyline");
+    route.setAttribute("points", pts);
+    route.setAttribute("class", "routeLine");
+    svg.appendChild(route);
 
-    // 支線：E-01 → E-28
-    const e01 = stations.find(s => s.id === "E-01");
-    const e28 = stations.find(s => s.id === "E-28");
-    if (e01 && e28) {
-      const spur = elNS("line");
-      spur.setAttribute("x1", e01.x);
-      spur.setAttribute("y1", e01.y);
-      spur.setAttribute("x2", e28.x);
-      spur.setAttribute("y2", e28.y);
-      spur.setAttribute("class", "routeLine");
-      svg.appendChild(spur);
+    // 大江戸線だけ支線：E-01 → E-28
+    if (currentLine.id === "oedo") {
+      const e01 = stations.find(s => s.id === "E-01");
+      const e28 = stations.find(s => s.id === "E-28");
+      if (e01 && e28) {
+        const spur = elNS("line");
+        spur.setAttribute("x1", e01.x);
+        spur.setAttribute("y1", e01.y);
+        spur.setAttribute("x2", e28.x);
+        spur.setAttribute("y2", e28.y);
+        spur.setAttribute("class", "routeSpur");
+        svg.appendChild(spur);
+      }
     }
 
-    // 駅
     stations.forEach((s) => {
       const g = elNS("g");
-      g.setAttribute("class", `stationNode${editMode ? " editing" : ""}`);
+      g.setAttribute("class", "stationNode");
       g.style.cursor = editMode ? "grab" : "pointer";
 
       const outer = elNS("circle");
@@ -424,9 +473,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const visited = isVisited(s.id);
       inner.setAttribute("fill", "rgba(0,0,0,0)");
-      inner.setAttribute("stroke", visited ? "var(--ok)" : "var(--accent)");
+      inner.setAttribute("stroke", visited ? "var(--ok)" : "var(--line)");
 
-      const place = labelPlacement(s);
+      const place = labelPlacement(currentLine.id, s);
 
       const label = elNS("text");
       label.setAttribute("x", s.x + place.nameDx);
@@ -442,7 +491,6 @@ window.addEventListener("DOMContentLoaded", () => {
       code.setAttribute("class", "stationCode");
       code.textContent = s.code;
 
-      // クリック/ドラッグ
       const onPointerDown = (evt) => {
         if (!editMode) return;
         evt.preventDefault();
@@ -452,6 +500,7 @@ window.addEventListener("DOMContentLoaded", () => {
       };
 
       const onClick = () => {
+        if (!currentLine) return;
         if (editMode) {
           if (movedDuringDrag) return;
           return;
@@ -473,10 +522,76 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================
-  // 9) Sheet
+  // 11) Line list
+  // =========================
+  function renderLineList(){
+    lineList.innerHTML = "";
+
+    lines.forEach((line) => {
+      const done = visitedStationCount(line);
+      const total = line.stations.length;
+
+      const row = document.createElement("div");
+      row.className = "lineRow" + (currentLine?.id === line.id ? " active" : "");
+
+      const left = document.createElement("div");
+      left.className = "lineName";
+      left.textContent = line.name;
+
+      const right = document.createElement("div");
+      right.className = "lineRate";
+      right.textContent = `${done}/${total}`;
+
+      row.append(left, right);
+
+      row.addEventListener("click", () => {
+        selectLine(line.id);
+        closeMenu();
+      });
+
+      lineList.appendChild(row);
+    });
+  }
+
+  // =========================
+  // 12) Line select
+  // =========================
+  function showEmpty(){
+    emptyState?.classList.remove("hidden");
+  }
+  function hideEmpty(){
+    emptyState?.classList.add("hidden");
+  }
+
+  function selectLine(lineId){
+    const line = lines.find(l => l.id === lineId);
+    if (!line) return;
+
+    currentLine = line;
+    setLineColor(line.color);
+
+    // ④：路線ごとの配置をロード（なければデフォルト）
+    stations = loadLayout(line);
+
+    loadProofs(line.id);
+    selectedStation = null;
+
+    closeSheet();
+    closeModal();
+
+    // 編集モードは路線切り替え時にOFFへ（事故防止）
+    setEditMode(false);
+
+    hideEmpty();
+    renderSvg();
+    renderLineList();
+  }
+
+  // =========================
+  // 13) Sheet
   // =========================
   function openSheet(station){
-    if (editMode) return;
+    if (!currentLine) return;
     selectedStation = station;
 
     stationName.textContent = `${station.name}（${station.code}）`;
@@ -493,7 +608,7 @@ window.addEventListener("DOMContentLoaded", () => {
   closeSheetBtn?.addEventListener("click", closeSheet);
 
   // =========================
-  // 10) Proof list (with delete)
+  // 14) Proof list（表示順：コメント→写真→日付）
   // =========================
   function renderProofs(){
     proofList.innerHTML = "";
@@ -515,20 +630,20 @@ window.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "proofCard";
 
-      const meta = document.createElement("div");
-      meta.style.color = "var(--muted)";
-      meta.style.fontSize = "12px";
-      meta.style.marginBottom = "8px";
-      meta.textContent = new Date(p.createdAt).toLocaleString("ja-JP");
+      const comment = document.createElement("div");
+      comment.style.marginTop = "2px";
+      comment.textContent = (p.comment || "").trim() ? p.comment : "（コメントなし）";
 
       const img = document.createElement("img");
       img.className = "proofImg";
       img.src = p.photo;
       img.alt = "証の写真";
 
-      const comment = document.createElement("div");
-      comment.style.marginTop = "8px";
-      comment.textContent = (p.comment || "").trim() ? p.comment : "（コメントなし）";
+      const meta = document.createElement("div");
+      meta.style.color = "var(--muted)";
+      meta.style.fontSize = "12px";
+      meta.style.marginTop = "8px";
+      meta.textContent = new Date(p.createdAt).toLocaleString("ja-JP");
 
       const del = document.createElement("button");
       del.type = "button";
@@ -544,6 +659,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
         renderSvg();
         renderProofs();
+        renderLineList();
 
         const c = countByStation(selectedStation.id);
         stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
@@ -555,11 +671,15 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================
-  // 11) Modal
+  // 15) Modal
   // =========================
   function openModal(){
     if (editMode) {
       alert("編集モード中は証追加できません。OFFにしてください。");
+      return;
+    }
+    if (!currentLine){
+      alert("先に路線図を選択してください。");
       return;
     }
     if (!selectedStation){
@@ -589,9 +709,7 @@ window.addEventListener("DOMContentLoaded", () => {
   closeModalBtn?.addEventListener("click", closeModal);
   modal?.querySelector(".modal__backdrop")?.addEventListener("click", closeModal);
 
-  // =========================
-  // 12) Photo preview
-  // =========================
+  // photo preview
   function preview(file){
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -622,9 +740,7 @@ window.addEventListener("DOMContentLoaded", () => {
     photoPreviewInner.innerHTML = "";
   });
 
-  // =========================
-  // 13) Save proof
-  // =========================
+  // save proof
   saveProofBtn?.addEventListener("click", () => {
     const file = photoInputFile.files?.[0] || photoInputCamera.files?.[0];
     if (!file){
@@ -652,6 +768,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       renderSvg();
       renderProofs();
+      renderLineList();
 
       const c = countByStation(selectedStation.id);
       stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
@@ -660,7 +777,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================
-  // 14) Editor bar actions（PC用）
+  // 16) Editor bar actions（PCのみ）
   // =========================
   setEditMode(false);
 
@@ -671,19 +788,31 @@ window.addEventListener("DOMContentLoaded", () => {
 
   if (!isIPhone) {
     toggleEditBtn?.addEventListener("click", () => {
+      if (!currentLine) {
+        alert("先に路線図を選択してください。");
+        return;
+      }
       setEditMode(!editMode);
       if (editMode) closeSheet();
       renderSvg();
     });
 
     copyJsonBtn?.addEventListener("click", async () => {
+      if (!currentLine) {
+        alert("先に路線図を選択してください。");
+        return;
+      }
       const json = stationsExportJson();
       await copyToClipboard(json);
     });
 
     downloadJsonBtn?.addEventListener("click", () => {
+      if (!currentLine) {
+        alert("先に路線図を選択してください。");
+        return;
+      }
       const json = stationsExportJson();
-      downloadText("oedo_stations_layout.json", json);
+      downloadText(`${currentLine.id}_stations_layout.json`, json);
     });
 
     gridToggle?.addEventListener("change", () => {
@@ -695,14 +824,16 @@ window.addEventListener("DOMContentLoaded", () => {
       snapToGrid = snapToggle.checked;
     });
   } else {
-    // iPhoneでは編集モードを使わない運用
+    // iPhoneは編集機能OFF
     editMode = false;
     showGrid = false;
     snapToGrid = true;
   }
 
   // =========================
-  // 15) Initial render
+  // 17) Initial
   // =========================
-  renderSvg();
+  renderLineList();
+  showEmpty();
+  openMenu();
 });

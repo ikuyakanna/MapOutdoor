@@ -3,116 +3,103 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>大江戸線 証アプリ（SVG試作）</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#0b0b0f" />
+  <title>路線 証アプリ（試作）</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
 
-<header class="topbar">
-  <div class="title">大江戸線｜駅制覇（SVG試作）</div>
-  <div class="subtitle">駅をタップ → 証を残す（写真必須）</div>
-</header>
+  <!-- ハンバーガー -->
+  <button id="menuButton" class="menuButton" aria-label="路線メニューを開く">
+    <span></span><span></span><span></span>
+  </button>
 
-<main class="main">
-  <!-- 編集バー（PCで調整用） -->
-<section class="editorBar" id="editorBar">
-  <button class="btn btn--ghost" id="toggleEditBtn" type="button">編集モード：OFF</button>
-  <button class="btn btn--ghost" id="copyJsonBtn" type="button">配置JSONをコピー</button>
-  <button class="btn btn--ghost" id="downloadJsonBtn" type="button">JSONを保存</button>
-  <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;">
-  <input type="checkbox" id="gridToggle">
-  グリッド表示
-</label>
+  <!-- サイドメニュー -->
+  <aside id="sideMenu" class="sideMenu" aria-label="路線一覧">
+    <div class="sideMenu__header">
+      <div class="sideMenu__title">路線を選択</div>
+      <div class="sideMenu__sub">達成率（達成駅数/全駅）</div>
+    </div>
+    <div id="lineList" class="lineList"></div>
+  </aside>
 
-<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;">
-  <input type="checkbox" id="snapToggle" checked>
-  グリッド吸着
-</label>
-  <span class="editorHint" id="editorHint">編集モードONで駅をドラッグできます</span>
-</section>
-  <!-- 自前の簡易路線図（SVG） -->
-  <div class="mapWrap">
-    <svg id="oedoSvg" class="oedoSvg" viewBox="0 0 390 844" role="img" aria-label="都営大江戸線（簡易路線図）">
-      <!-- app.js が中身を描画します -->
-    </svg>
+  <!-- 画面暗転（右側タップで閉じる） -->
+  <div id="overlay" class="overlay" aria-hidden="true"></div>
+
+  <!-- 編集バー（PC用） -->
+  <div id="editorBar" class="editorBar">
+    <button id="toggleEditBtn" class="btn btn--solid" type="button">編集モード：OFF</button>
+    <label class="chk"><input id="gridToggle" type="checkbox" /> グリッド</label>
+    <label class="chk"><input id="snapToggle" type="checkbox" checked /> スナップ</label>
+    <button id="copyJsonBtn" class="btn btn--ghost" type="button">配置JSONをコピー</button>
+    <button id="downloadJsonBtn" class="btn btn--ghost" type="button">配置JSONをDL</button>
+    <div id="editorHint" class="editorHint">OFF：駅をタップして証を追加できます</div>
   </div>
 
-  <!-- 駅詳細シート -->
-  <section id="sheet" class="sheet hidden">
-    <div class="sheet__handle"></div>
+  <!-- 未選択メッセージ -->
+  <div id="emptyState" class="emptyState hidden">路線図を選択してください</div>
 
+  <!-- 路線図 -->
+  <main class="main">
+    <svg id="oedoSvg" class="routeSvg" viewBox="0 0 390 844" role="img" aria-label="路線図"></svg>
+  </main>
+
+  <!-- 駅詳細シート -->
+  <section id="sheet" class="sheet hidden" aria-label="駅詳細">
     <div class="sheet__header">
       <div>
-        <div id="stationName" class="sheet__title"></div>
-        <div id="stationStatus" class="sheet__status"></div>
+        <div id="stationName" class="sheet__title">駅名</div>
+        <div id="stationStatus" class="sheet__sub">未達成</div>
       </div>
       <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
     </div>
 
     <div class="sheet__actions">
-      <button id="addProofBtn" class="btn btn--primary" type="button">証を追加</button>
+      <button id="addProofBtn" class="btn btn--solid" type="button">証を追加</button>
     </div>
 
-    <div class="sheet__section">
-      <div class="sheet__sectionTitle">この駅の証</div>
-      <div id="proofList" class="proofList"></div>
-    </div>
+    <div id="proofList" class="proofList"></div>
   </section>
 
-  <!-- 投稿モーダル -->
-  <div id="modal" class="modal hidden">
+  <!-- 証追加モーダル -->
+  <section id="modal" class="modal hidden" aria-label="証追加">
     <div class="modal__backdrop"></div>
 
-    <div class="modal__panel">
+    <div class="modal__panel" role="dialog" aria-modal="true">
       <div class="modal__header">
         <div class="modal__title">証を追加</div>
         <button id="closeModalBtn" class="btn btn--ghost" type="button">閉じる</button>
       </div>
 
-      <div class="form">
-        <label class="field">
-          <div class="field__label">写真（必須）</div>
-
-          <div class="photoButtons">
-            <label class="btn btn--ghost">
-              📁 アルバム
-              <input id="photoInputFile" type="file" accept="image/*" hidden>
-            </label>
-
-            <label class="btn btn--ghost">
-              📷 カメラ
-              <input id="photoInputCamera" type="file" accept="image/*" capture="environment" hidden>
-            </label>
+      <div class="modal__body">
+        <div class="row">
+          <div class="row__label">写真（必須）</div>
+          <div class="row__controls">
+            <input id="photoInputFile" type="file" accept="image/*" />
+            <input id="photoInputCamera" type="file" accept="image/*" capture="environment" />
           </div>
-
-          <div id="photoPreviewWrap" class="photoPreview hidden">
-            <div class="photoPreview__top">
-              <button id="reselectBtn" class="btn btn--ghost" type="button">選びなおす</button>
-              <button id="clearPhotoBtn" class="btn btn--ghost" type="button">消す</button>
-            </div>
-            <div id="photoPreviewInner"></div>
-          </div>
-        </label>
-
-        <label class="field">
-          <div class="field__label">コメント</div>
-          <textarea id="commentInput" rows="3" placeholder="例：ラーメン最高、など"></textarea>
-        </label>
-
-        <div class="form__row">
-          <button id="saveProofBtn" class="btn btn--primary" type="button">保存</button>
-          <div id="formError" class="formError hidden"></div>
         </div>
 
-        <div class="hint">
-          ※ 保存先はこのブラウザ（localStorage）です。別端末には引き継がれません。
+        <div id="photoPreviewWrap" class="photoPreviewWrap hidden">
+          <div class="photoPreviewBtns">
+            <button id="reselectBtn" class="btn btn--ghost" type="button">選びなおす</button>
+            <button id="clearPhotoBtn" class="btn btn--ghost" type="button">クリア</button>
+          </div>
+          <div id="photoPreviewInner" class="photoPreviewInner"></div>
+        </div>
+
+        <div class="row">
+          <div class="row__label">コメント</div>
+          <textarea id="commentInput" class="textarea" rows="3" placeholder="例：○○でご飯食べた！"></textarea>
         </div>
       </div>
+
+      <div class="modal__footer">
+        <button id="saveProofBtn" class="btn btn--solid" type="button">保存</button>
+      </div>
     </div>
-  </div>
+  </section>
 
-</main>
-
-<script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
