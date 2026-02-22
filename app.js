@@ -7,7 +7,8 @@
 // - 路線は環状に閉じない（E-38→E-01は繋がない）
 // - 支線として E-01(新宿西口) → E-28(都庁前) を線で追加
 // - ラベル被り軽減：区間ごとに外側へ＆上段/下段は交互にずらす
-// - iPhoneでは編集バーを非表示（編集機能も実質OFF）
+// - iPhoneでは編集バーを完全非表示（親要素ごと消す / 編集機能も実質OFF）
+// - 例外：E-18 築地市場は駅名を左に出す
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
@@ -18,7 +19,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const SVG_H = 844;
 
   // =========================
-  // 1) Stations（全38駅）※あなたの最新JSONを反映（縦長キャンバス座標）
+  // 1) Stations（全38駅）※最新JSON（縦長キャンバス座標）
   // =========================
   const stations = [
     { id:"E-01", code:"E-01", name:"新宿西口", x:120, y:420 },
@@ -82,6 +83,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const svg = document.getElementById("oedoSvg");
 
   // editor bar（編集UI）
+  const editorBar = document.getElementById("editorBar"); // ★親要素（ここを丸ごと消す）
   const toggleEditBtn = document.getElementById("toggleEditBtn");
   const copyJsonBtn = document.getElementById("copyJsonBtn");
   const downloadJsonBtn = document.getElementById("downloadJsonBtn");
@@ -116,7 +118,8 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================
-  // 3.5) iPhoneでは編集バーを非表示にする
+  // 3.5) iPhoneでは編集バーを完全消滅させる
+  //  - ボタンだけ消すと「灰色の細い帯（親の箱）」が残るので、親ごと消す
   // =========================
   const isIPhone = /iPhone|iPod/i.test(navigator.userAgent);
 
@@ -126,13 +129,15 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   if (isIPhone) {
-    // ボタン・ヒントを隠す（編集UI）
+    // ★ 親の箱ごと消す（これが決定打）
+    hideEl(editorBar);
+
+    // 念のため：個別の要素も消す（HTML構造が違っても残骸が出ないように）
     hideEl(toggleEditBtn);
     hideEl(copyJsonBtn);
     hideEl(downloadJsonBtn);
     hideEl(editorHint);
 
-    // チェックボックスは label の中にあることが多いので親ごと隠す
     hideEl(gridToggle?.closest("label") || gridToggle?.parentElement);
     hideEl(snapToggle?.closest("label") || snapToggle?.parentElement);
   }
@@ -198,7 +203,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // =========================
   // 6) Edit mode (dragging)
-  //  - iPhoneは編集UI非表示なので、実質 editMode を使わない想定
   // =========================
   let editMode = false;
   let dragging = null; // { station, dx, dy }
@@ -266,29 +270,32 @@ window.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("pointerup", endDrag);
 
   // =========================
-  // 7) ラベル被り調整（今回のレイアウト専用）
-  //  - 左縦（x=60）：左に出す（外側）
-  //  - 右縦（x=300）：右に出す（外側）
-  //  - 上段（y=420, x=120..300）：上に出す＋交互に少し左右
-  //  - 下段（y=820, x=60..240）：上に出す＋交互に少し左右（下に出すと画面外）
+  // 7) ラベル配置
   // =========================
   function labelPlacement(st){
-    const n = parseInt(st.id.replace("E-", ""), 10);
+    // ★ 例外：築地市場（E-18）は左に出す（最優先でreturn）
+    if (st.id === "E-18") {
+      return {
+        nameDx: -18,
+        nameDy: 5,
+        codeDx: -18,
+        codeDy: 16,
+        anchor: "end",
+      };
+    }
 
-    // 交互にちょい左右（上段/下段の横並びの被り対策）
-    const alt = (n % 2 === 0) ? 10 : -10;
+    // 上段（y=420, x=120..300）：上に出す（ズレないように揃える）
+    if (st.y === 420 && st.x >= 120) {
+      return {
+        nameDx: 0,
+        nameDy: -18,
+        codeDx: 0,
+        codeDy: -34,
+        anchor: "middle",
+      };
+    }
 
-if (st.y === 420 && st.x >= 120) {
-  return {
-    nameDx: 0,
-    nameDy: -18,
-    codeDx: 0,
-    codeDy: -34,
-    anchor: "middle",
-  };
-}
-
-    // 下段（E-15〜E-18）：上へ
+    // 下段（E-15〜E-18のうち E-18 は上の例外で処理済み）
     if (st.y === 820 && st.x <= 240) {
       return {
         nameDx: 0,
@@ -301,7 +308,6 @@ if (st.y === 420 && st.x >= 120) {
 
     // 右縦（x=300）：右へ
     if (st.x === 300) {
-      const wobble = (n % 2 === 0) ? 6 : -6;
       return {
         nameDx: 18,
         nameDy: 5,
@@ -311,9 +317,8 @@ if (st.y === 420 && st.x >= 120) {
       };
     }
 
-    // 左縦（x=60）：左へ（外側）
+    // 左縦（x=60）：左へ
     if (st.x === 60) {
-      const wobble = (n % 2 === 0) ? 6 : -6;
       return {
         nameDx: -18,
         nameDy: 5,
@@ -323,7 +328,7 @@ if (st.y === 420 && st.x >= 120) {
       };
     }
 
-    // 上段その他（念のため）
+    // デフォルト
     return {
       nameDx: 0,
       nameDy: -18,
@@ -365,7 +370,7 @@ if (st.y === 420 && st.x >= 120) {
 
     renderGrid();
 
-    // 背景枠（縦長キャンバスに追従）
+    // 背景枠
     const bg = elNS("rect");
     bg.setAttribute("x", "16");
     bg.setAttribute("y", "16");
@@ -383,7 +388,7 @@ if (st.y === 420 && st.x >= 120) {
     line.setAttribute("class", "routeLine");
     svg.appendChild(line);
 
-    // 支線：E-01(新宿西口) → E-28(都庁前)
+    // 支線：E-01 → E-28
     const e01 = stations.find(s => s.id === "E-01");
     const e28 = stations.find(s => s.id === "E-28");
     if (e01 && e28) {
@@ -418,7 +423,6 @@ if (st.y === 420 && st.x >= 120) {
       inner.setAttribute("fill", "rgba(0,0,0,0)");
       inner.setAttribute("stroke", visited ? "var(--ok)" : "var(--accent)");
 
-      // ラベル（被り調整）
       const place = labelPlacement(s);
 
       const label = elNS("text");
@@ -662,8 +666,6 @@ if (st.y === 420 && st.x >= 120) {
   showGrid = !!gridToggle?.checked;
   snapToGrid = !!snapToggle?.checked;
 
-  // iPhoneは編集UIを隠しているので、イベントは付けても問題ないが
-  // 念のため編集操作をしにくくする（好みでON/OFF）
   if (!isIPhone) {
     toggleEditBtn?.addEventListener("click", () => {
       setEditMode(!editMode);
