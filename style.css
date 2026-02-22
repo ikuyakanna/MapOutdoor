@@ -424,3 +424,88 @@ body{
   background: rgba(182,0,122,.22);
   border-color: rgba(182,0,122,.40);
 }
+
+/* ===== Primary button（青） ===== */
+.btn--primary{
+  border: 1px solid rgba(64,156,255,.55);
+  background: rgba(64,156,255,.22);
+  color: rgba(255,255,255,.96);
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
+}
+.btn--primary:active{
+  transform: translateY(1px);
+}
+
+/* ===== Proof modal design upgrade ===== */
+.modal__panel{
+  /* 既存の背景より“黒一色”感を減らす */
+  background: linear-gradient(180deg, rgba(18,18,22,.96) 0%, rgba(10,10,12,.96) 100%);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+
+/* ヘッダーに少しアクセント */
+.modal__header{
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* フッターもカードっぽく */
+.modal__footer{
+  background: rgba(255,255,255,.03);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* タイトルを少し目立たせる */
+.modal__title{
+  letter-spacing: .02em;
+}
+
+/* 行のカード感 */
+.row{
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+}
+
+/* ラベルを少し整理 */
+.row__label{
+  font-weight: 800;
+  color: rgba(255,255,255,.78);
+}
+
+/* テキストエリアも少し明るく */
+.textarea{
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+}
+
+/* プレビュー枠をカードっぽく */
+.photoPreviewWrap{
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+}
+
+/* ===== Modal accent line ===== */
+.modal__panel{
+  position: relative; /* 念のため */
+  overflow: hidden;   /* ラインを角丸に沿わせる */
+}
+
+.modal__panel::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255,255,255,.05), var(--line), rgba(255,255,255,.05));
+  opacity: .95;
+}

@@ -11,6 +11,8 @@
 // - iPhoneでは編集バーを親ごと完全非表示（編集機能も実質OFF）
 // - 大江戸線の支線：E-01(新宿西口) → E-28(都庁前)
 // - 大江戸線の例外：E-18 築地市場は駅名を左に出す
+// - 大江戸線：E-37/E-38（練馬春日町/光が丘）は左
+// - 丸ノ内線：縦は左右交互、横は上下交互（上下を逆に）＋中野坂上(M-20)は下固定
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
@@ -21,13 +23,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // =========================
   // 1) Lines（ここに増やしていく）
-  //   color: 路線色（③）
+  //   color: 路線色（CSS変数 --line を更新）
   // =========================
   const lines = [
     {
       id: "oedo",
       name: "都営大江戸線",
-      color: "#b6007a", // ★マゼンタ（本物寄せ）
+      color: "#b6007a", // マゼンタ（本物寄せ）
       stations: [
         { id:"E-01", code:"E-01", name:"新宿西口", x:140, y:420 },
         { id:"E-02", code:"E-02", name:"東新宿", x:200, y:420 },
@@ -72,7 +74,7 @@ window.addEventListener("DOMContentLoaded", () => {
     {
       id: "marunouchi",
       name: "東京メトロ丸ノ内線",
-      color: "#ff3b30", // 赤
+      color: "#ff3b30",
       stations: [
         { id:"M-01", code:"M-01", name:"池袋", x:220, y:20 },
         { id:"M-02", code:"M-02", name:"新大塚", x:220, y:60 },
@@ -155,7 +157,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const commentInput = document.getElementById("commentInput");
   const saveProofBtn = document.getElementById("saveProofBtn");
 
-  // ★追加：左右2ボタン
+  // photo buttons（左右）
   const pickPhotoBtn = document.getElementById("pickPhotoBtn");
   const takePhotoBtn = document.getElementById("takePhotoBtn");
 
@@ -193,7 +195,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   overlay?.addEventListener("click", () => {
     closeMenu();
-    // 路線未選択のときはメッセージを出したい → emptyStateは常時制御してるのでここでは触らない
   });
 
   // =========================
@@ -214,7 +215,7 @@ window.addEventListener("DOMContentLoaded", () => {
   let dragging = null; // { station, dx, dy }
   let movedDuringDrag = false;
 
-  // ★追加：直前の写真入力元
+  // photo source
   let lastPhotoSource = "file"; // "file" or "camera"
 
   // =========================
@@ -236,13 +237,12 @@ window.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(proofKey(currentLine.id), JSON.stringify(proofs));
   }
 
-  // ④ 路線ごとにレイアウト保存
+  // 路線ごとにレイアウト保存
   function loadLayout(line){
     const raw = localStorage.getItem(layoutKey(line.id));
     if (!raw) return line.stations.map(s => ({...s}));
     try{
       const arr = JSON.parse(raw);
-      // id一致で上書き（name/codeは念のため維持）
       const byId = new Map(arr.map(x => [x.id, x]));
       return line.stations.map(s => {
         const p = byId.get(s.id);
@@ -371,7 +371,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function endDrag(){
     if (dragging) {
-      // ④：路線ごとの配置を随時保存
       saveLayout();
     }
     dragging = null;
@@ -381,73 +380,68 @@ window.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("pointerup", endDrag);
 
   // =========================
-  // 9) ラベル配置（路線ごとに分岐してOK）
+  // 9) ラベル配置
   // =========================
-function labelPlacement(lineId, st){
-  // 大江戸線：築地市場は左
-  if (lineId === "oedo" && st.id === "E-18") {
-    return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
-  }
-
-  // 大江戸線：上端の2駅は左（光が丘・練馬春日町）
-  if (lineId === "oedo" && (st.id === "E-37" || st.id === "E-38")) {
-    return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
-  }
-
-  // ===== 丸ノ内線：被り回避（左右交互） =====
-// ===== 丸ノ内線：被り回避（左右交互＋横は上下交互） =====
-if (lineId === "marunouchi") {
-
-  // ★ 中野坂上は必ず下表示（最優先ルール）
-  if (st.id === "M-20") {
-    return { nameDx: 2, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
-  }
-
-  // ===== 縦ライン（M-01〜M-19）左右交互 =====
-  if (/^M-(0[1-9]|1\d)$/.test(st.id)) {
-    const idx = stations.findIndex(x => x.id === st.id);
-    const isLeft = idx % 2 === 0;
-
-    return isLeft
-      ? { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" }
-      : { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
-  }
-
-  // ===== 横ライン（M-21〜M-28）上下交互（★上下を逆に）=====
-  if (/^M-(21|22|23|24|25|26|27|28)$/.test(st.id)) {
-
-    // 左→右の並び順
-    const order = ["M-25","M-24","M-23","M-22","M-21","M-26","M-27","M-28"];
-    const i = order.indexOf(st.id);
-
-    // ★ここを逆にした（奇数=上、偶数=下）
-    const isUp = i % 2 === 1;
-
-    if (isUp) {
-      return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
-    } else {
-      return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
+  function labelPlacement(lineId, st){
+    // 大江戸線：築地市場は左
+    if (lineId === "oedo" && st.id === "E-18") {
+      return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
     }
-  }
-}
 
-  // ===== 共通ルール（デフォルト） =====
-  // 上端（yが小さい）→下に出す
-  if (st.y <= 80) {
-    return { nameDx: 0, nameDy: 18, codeDx: 0, codeDy: 32, anchor: "middle" };
-  }
+    // 大江戸線：上端の2駅（練馬春日町/光が丘）は左
+    if (lineId === "oedo" && (st.id === "E-37" || st.id === "E-38")) {
+      return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
+    }
 
-  // 左側 → 左、右側 → 右
-  if (st.x <= 90) {
-    return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
-  }
-  if (st.x >= 300) {
-    return { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
-  }
+    // ===== 丸ノ内線：被り回避 =====
+    if (lineId === "marunouchi") {
+      // 中野坂上は必ず下
+      if (st.id === "M-20") {
+        return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
+      }
 
-  // それ以外 → 上に
-  return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
-}
+      // 縦ライン（M-01〜M-19）：左右交互
+      if (/^M-(0[1-9]|1\d)$/.test(st.id)) {
+        const idx = stations.findIndex(x => x.id === st.id);
+        const isLeft = idx % 2 === 0; // 0,2,4...を左
+        return isLeft
+          ? { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" }
+          : { nameDx: 18,  nameDy: 5, codeDx: 18,  codeDy: 16, anchor: "start" };
+      }
+
+      // 横ライン（M-21〜M-28）：上下交互（上下を逆に）
+      if (/^M-(21|22|23|24|25|26|27|28)$/.test(st.id)) {
+        const order = ["M-25","M-24","M-23","M-22","M-21","M-26","M-27","M-28"];
+        const i = order.indexOf(st.id);
+
+        // 上下を逆：奇数=上、偶数=下
+        const isUp = (i === -1) ? true : (i % 2 === 1);
+
+        if (isUp) {
+          return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+        } else {
+          return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
+        }
+      }
+    }
+
+    // ===== 共通ルール（デフォルト） =====
+    // 上端（yが小さい）→下に出す
+    if (st.y <= 80) {
+      return { nameDx: 0, nameDy: 18, codeDx: 0, codeDy: 32, anchor: "middle" };
+    }
+
+    // 左側 → 左、右側 → 右
+    if (st.x <= 90) {
+      return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
+    }
+    if (st.x >= 300) {
+      return { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
+    }
+
+    // それ以外 → 上に
+    return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+  }
 
   // =========================
   // 10) Render
@@ -620,16 +614,14 @@ if (lineId === "marunouchi") {
     currentLine = line;
     setLineColor(line.color);
 
-    // ④：路線ごとの配置をロード（なければデフォルト）
     stations = loadLayout(line);
-
     loadProofs(line.id);
-    selectedStation = null;
 
+    selectedStation = null;
     closeSheet();
     closeModal();
 
-    // 編集モードは路線切り替え時にOFFへ（事故防止）
+    // 路線切り替え時は編集モードOFF
     setEditMode(false);
 
     hideEmpty();
@@ -742,13 +734,19 @@ if (lineId === "marunouchi") {
     photoPreviewWrap.classList.add("hidden");
     photoPreviewInner.innerHTML = "";
     commentInput.value = "";
-    lastPhotoSource = "file"; // 初期はアルバム側
+    lastPhotoSource = "file";
 
     modal.classList.remove("hidden");
+
+    // ★モーダル中はハンバーガーを隠す
+    if (menuButton) menuButton.style.display = "none";
   }
 
   function closeModal(){
     modal.classList.add("hidden");
+
+    // ★戻す
+    if (menuButton) menuButton.style.display = "";
   }
 
   addProofBtn?.addEventListener("click", (e) => {
@@ -760,7 +758,7 @@ if (lineId === "marunouchi") {
   closeModalBtn?.addEventListener("click", closeModal);
   modal?.querySelector(".modal__backdrop")?.addEventListener("click", closeModal);
 
-  // ★追加：左右ボタン → 隠しinputを開く
+  // 左右ボタン → 隠しinputを開く
   pickPhotoBtn?.addEventListener("click", () => {
     lastPhotoSource = "file";
     photoInputFile?.click();
@@ -793,7 +791,7 @@ if (lineId === "marunouchi") {
     if (f) preview(f);
   });
 
-  // ★改善：選びなおす → 直前の入口を開く
+  // 選びなおす → 直前の入口を開く
   reselectBtn?.addEventListener("click", () => {
     if (lastPhotoSource === "camera") photoInputCamera?.click();
     else photoInputFile?.click();
