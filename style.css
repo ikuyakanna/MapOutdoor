@@ -8,7 +8,6 @@
   --ok: #35d07f;
 
   /* 路線カラー（JSで路線選択時に更新） */
-  /* 初期値も大江戸線マゼンタ寄せ */
   --line: #b6007a;
 }
 
@@ -35,7 +34,6 @@ body{
   width: 100%;
   height: auto;
   display:block;
-  /* 枠が見えるのを避けるため背景は透明 */
   background: transparent;
 }
 
@@ -107,6 +105,7 @@ body{
   background: rgba(255,255,255,.04);
   color: var(--text);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn--solid{
   background: rgba(255,255,255,.10);
@@ -117,6 +116,18 @@ body{
   background: rgba(0,0,0,.10);
 }
 .btn:active{ transform: translateY(1px); }
+
+/* 青いメインボタン */
+.btn--primary{
+  border: 1px solid rgba(64,156,255,.55);
+  background: rgba(64,156,255,.22);
+  color: rgba(255,255,255,.96);
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
+}
+.btn--primary:active{
+  transform: translateY(1px);
+}
 
 /* ===== Menu UI ===== */
 .menuButton{
@@ -131,14 +142,10 @@ body{
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-
-  /* 影で“アプリ感” */
   box-shadow: 0 8px 20px rgba(0,0,0,.35);
-
   cursor: pointer;
   display: grid;
   place-items: center;
-  -webkit-tap-highlight-color: transparent;
   transition: transform .08s ease, background .15s ease, border-color .15s ease;
 }
 .menuButton:active{
@@ -146,17 +153,13 @@ body{
   background: rgba(0,0,0,.62);
   border-color: rgba(255,255,255,.18);
 }
-
-/* spanを“等間隔”にする */
 .menuButton span{
   position: absolute;
-  width: 20px;      /* 長すぎると野暮ったいので少し短め */
-  height: 2.5px;    /* 少し太めで綺麗 */
+  width: 20px;
+  height: 2.5px;
   background: rgba(255,255,255,.92);
   border-radius: 999px;
 }
-
-/* 線間を短く、均等に */
 .menuButton span:nth-child(1){ transform: translateY(-6px); }
 .menuButton span:nth-child(2){ transform: translateY(0px); }
 .menuButton span:nth-child(3){ transform: translateY(6px); }
@@ -315,190 +318,45 @@ body{
   position: fixed;
   inset: 0;
   z-index: 2450;
-  display: grid;
-  place-items: center;
+
+  /* bottom sheet */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  /* 上20%を空ける */
+  padding-top: 20vh;
+  padding-bottom: env(safe-area-inset-bottom);
 }
+
 .modal__backdrop{
   position:absolute;
   inset:0;
-  background: rgba(0,0,0,.55);
+  background: rgba(0,0,0,.40);
 }
+
 .modal__panel{
   position: relative;
   width: min(520px, calc(100vw - 24px));
-  max-height: min(82vh, 820px);
-  overflow: auto;
-  background: rgba(12,12,14,.96);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-}
-.modal__header, .modal__footer{
-  padding: 12px 12px;
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 8px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.modal__footer{
-  border-top: 1px solid rgba(255,255,255,.08);
-  border-bottom: none;
-}
-.modal__title{ font-weight: 900; }
-.modal__body{ padding: 12px; }
 
-.row{ margin-bottom: 12px; }
-.row__label{ font-size: 12px; color: rgba(255,255,255,.72); margin-bottom: 6px; }
-.row__controls{ display:flex; gap: 10px; flex-wrap: wrap; }
+  /* 下80%固定 */
+  height: 80vh;
+  max-height: 80vh;
 
-.textarea{
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.03);
-  color: var(--text);
-}
+  /* パネル自体はスクロールさせない */
+  overflow: hidden;
 
-.photoPreviewWrap{
-  border: 1px dashed rgba(255,255,255,.14);
-  border-radius: 16px;
-  padding: 10px;
-  margin-bottom: 12px;
-}
-.photoPreviewBtns{
-  display:flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.photoPreviewInner img{
-  width: 100%;
-  height: auto;
-  border-radius: 12px;
-  display:block;
-}
-
-/* ===== Photo pick buttons（追加） ===== */
-.fileInputHidden{
-  display:none !important;
-}
-
-.row__controls--photo{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.photoBtn{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap: 8px;
-
-  width: 100%;
-  padding: 12px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.92);
-
-  font-weight: 900;
-  cursor: pointer;
-
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: transform .08s ease, background .15s ease, border-color .15s ease;
-}
-
-.photoBtn:active{
-  transform: translateY(1px);
-}
-
-.photoBtn__icon{
-  font-size: 16px;
-  line-height: 1;
-}
-
-/* 撮影ボタンを強調（マゼンタ寄せ） */
-.photoBtn--primary{
-  background: rgba(182,0,122,.22);
-  border-color: rgba(182,0,122,.40);
-}
-
-/* ===== Primary button（青） ===== */
-.btn--primary{
-  border: 1px solid rgba(64,156,255,.55);
-  background: rgba(64,156,255,.22);
-  color: rgba(255,255,255,.96);
-  font-weight: 900;
-  box-shadow: 0 10px 24px rgba(0,0,0,.28);
-}
-.btn--primary:active{
-  transform: translateY(1px);
-}
-
-/* ===== Proof modal design upgrade ===== */
-.modal__panel{
-  /* 既存の背景より“黒一色”感を減らす */
   background: linear-gradient(180deg, rgba(18,18,22,.96) 0%, rgba(10,10,12,.96) 100%);
   border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
   box-shadow: 0 18px 60px rgba(0,0,0,.55);
+
+  /* ヘッダー/ボディ/フッター固定レイアウト */
+  display: flex;
+  flex-direction: column;
 }
 
-/* ヘッダーに少しアクセント */
-.modal__header{
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.03);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-/* フッターもカードっぽく */
-.modal__footer{
-  background: rgba(255,255,255,.03);
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-}
-
-/* タイトルを少し目立たせる */
-.modal__title{
-  letter-spacing: .02em;
-}
-
-/* 行のカード感 */
-.row{
-  padding: 10px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.03);
-}
-
-/* ラベルを少し整理 */
-.row__label{
-  font-weight: 800;
-  color: rgba(255,255,255,.78);
-}
-
-/* テキストエリアも少し明るく */
-.textarea{
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.05);
-}
-
-/* プレビュー枠をカードっぽく */
-.photoPreviewWrap{
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.03);
-}
-
-/* ===== Modal accent line ===== */
-.modal__panel{
-  position: relative; /* 念のため */
-  overflow: hidden;   /* ラインを角丸に沿わせる */
-}
-
+/* モーダル上部の薄いアクセントライン（路線色） */
 .modal__panel::before{
   content:"";
   position:absolute;
@@ -508,4 +366,121 @@ body{
   height: 3px;
   background: linear-gradient(90deg, rgba(255,255,255,.05), var(--line), rgba(255,255,255,.05));
   opacity: .95;
+}
+
+.modal__header, .modal__footer{
+  padding: 12px 12px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.modal__header{
+  flex: 0 0 auto;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+}
+.modal__footer{
+  flex: 0 0 auto;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+.modal__title{ font-weight: 900; letter-spacing: .02em; }
+
+/* ボディは残り領域。ここはスクロールさせない */
+.modal__body{
+  padding: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 行をカードっぽく */
+.row{
+  margin-bottom: 0;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+}
+.row__label{
+  font-size: 12px;
+  color: rgba(255,255,255,.78);
+  margin-bottom: 6px;
+  font-weight: 800;
+}
+.row__controls{ display:flex; gap: 10px; flex-wrap: wrap; }
+
+/* コメント欄（常に見えるように固定＝縮まない） */
+#commentInput{
+  flex: 0 0 auto;
+}
+
+/* もし「写真選択/撮影」ボタンを使っている場合の並び（任意） */
+.photoPickRow{
+  display: flex;
+  gap: 10px;
+}
+.photoPickRow .btn{
+  flex: 1 1 0;
+  border-radius: 14px;
+  padding: 11px 12px;
+}
+.fileInputHidden{
+  display:none;
+}
+
+/* textarea */
+.textarea{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  color: var(--text);
+}
+
+/* ===== 写真プレビュー：スクロールは“写真だけ” ===== */
+.photoPreviewWrap{
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  border-radius: 16px;
+  padding: 10px;
+
+  /* 余った高さを使う（写真エリアが伸びる） */
+  flex: 1 1 auto;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.photoPreviewBtns{
+  display:flex;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  /* ここは固定（スクロールしない） */
+  flex: 0 0 auto;
+}
+
+/* ★ここだけスクロール */
+.photoPreviewInner{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+}
+
+.photoPreviewInner img{
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display:block;
 }

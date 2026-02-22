@@ -397,7 +397,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (lineId === "marunouchi") {
       // 中野坂上は必ず下
       if (st.id === "M-20") {
-        return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
+        return { nameDx: 2, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
       }
 
       // 縦ライン（M-01〜M-19）：左右交互
