@@ -3,20 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>大江戸線 証アプリ（試作）</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <title>大江戸線 証アプリ（SVG試作）</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <header class="topbar">
-  <div class="title">大江戸線｜駅制覇（試作）</div>
-  <div class="subtitle">駅ピンをタップ → 証を残す（写真必須）</div>
+  <div class="title">大江戸線｜駅制覇（SVG試作）</div>
+  <div class="subtitle">駅をタップ → 証を残す（写真必須）</div>
 </header>
 
 <main class="main">
-  <div id="map"></div>
+  <!-- 自前の簡易路線図（SVG） -->
+  <div class="mapWrap">
+    <svg id="oedoSvg" class="oedoSvg" viewBox="0 0 1000 700" role="img" aria-label="都営大江戸線（簡易路線図）">
+      <!-- app.js が中身を描画します -->
+    </svg>
+  </div>
 
   <!-- 駅詳細シート -->
   <section id="sheet" class="sheet hidden">
@@ -77,12 +80,16 @@
 
         <label class="field">
           <div class="field__label">コメント</div>
-          <textarea id="commentInput" rows="3"></textarea>
+          <textarea id="commentInput" rows="3" placeholder="例：ラーメン最高、など"></textarea>
         </label>
 
         <div class="form__row">
           <button id="saveProofBtn" class="btn btn--primary" type="button">保存</button>
           <div id="formError" class="formError hidden"></div>
+        </div>
+
+        <div class="hint">
+          ※ 保存先はこのブラウザ（localStorage）です。別端末には引き継がれません。
         </div>
       </div>
     </div>
@@ -90,7 +97,6 @@
 
 </main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
   --panel2:#0f1623;
   --text:#e8eefc;
   --muted:#9fb0d0;
-  --accent:#b6007a; /* 大江戸線っぽいマゼンタ */
+  --accent:#b6007a; /* 大江戸線マゼンタ */
   --danger:#ff4d4d;
   --ok:#39d98a;
 }
@@ -23,22 +23,36 @@ html,body{
   border-bottom: 1px solid rgba(255,255,255,.08);
   background: linear-gradient(180deg, rgba(182,0,122,.18), rgba(0,0,0,0));
 }
-.title{ font-weight: 700; font-size: 16px; }
+.title{ font-weight: 800; font-size: 16px; }
 .subtitle{ font-size: 12px; color:var(--muted); margin-top:4px; }
 
 .main{
   height: calc(100% - 56px);
   position: relative;
-  z-index: 0;
 }
 
-/* 地図（z-indexが効くように position を付ける） */
-#map{
+.mapWrap{
   height: 100%;
   width: 100%;
   position: relative;
   z-index: 1;
+  display:flex;
+  align-items:stretch;
+  justify-content:stretch;
 }
+
+/* SVGは画面にフィット */
+.oedoSvg{
+  width: 100%;
+  height: 100%;
+  display:block;
+  background:
+    radial-gradient(1200px 700px at 40% 30%, rgba(182,0,122,.10), rgba(0,0,0,0)),
+    radial-gradient(900px 600px at 70% 60%, rgba(120,160,255,.06), rgba(0,0,0,0));
+}
+
+/* クリックしやすく */
+svg text{ user-select: none; }
 
 .btn{
   border: none;
@@ -58,7 +72,7 @@ html,body{
   left: 10px;
   right: 10px;
   bottom: 10px;
-  z-index: 10000; /* 地図より前 */
+  z-index: 10000; /* 前面 */
   background: rgba(18,26,41,.96);
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 16px;
@@ -66,8 +80,6 @@ html,body{
   box-shadow: 0 12px 40px rgba(0,0,0,.5);
   max-height: 60%;
   overflow: auto;
-
-  /* iOSの中スクロール安定化 */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -81,52 +93,44 @@ html,body{
   display:flex; align-items:center; justify-content:space-between;
   gap: 10px;
 }
-.sheet__title{ font-size: 18px; font-weight: 800; }
+.sheet__title{ font-size: 18px; font-weight: 900; }
 .sheet__status{ font-size: 12px; margin-top:2px; color: var(--muted); }
 .sheet__actions{ margin-top: 10px; }
 .sheet__section{ margin-top: 14px; }
-.sheet__sectionTitle{ font-weight: 800; margin-bottom: 10px; }
+.sheet__sectionTitle{ font-weight: 900; margin-bottom: 10px; }
 
 .proofList{ display:flex; flex-direction: column; gap: 10px; }
-
 .proofCard{
   background: rgba(15,22,35,.9);
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
   padding: 10px;
 }
-.proofMeta{ font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-
-/* 保存後の表示用（縦画像でも見切れない） */
 .proofImg{
   width: 100%;
   border-radius: 10px;
   display:block;
   border: 1px solid rgba(255,255,255,.08);
-
   max-height: 45vh;
   object-fit: contain;
   background: rgba(0,0,0,.25);
 }
-.proofComment{ margin-top: 8px; font-size: 13px; line-height: 1.35; }
 
-/* --- 投稿モーダル（画面全体に固定して崩れ防止） --- */
+/* --- 投稿モーダル（固定） --- */
 .modal{
-  position: fixed;       /* ←重要：absoluteではなくfixed */
+  position: fixed;
   inset: 0;
-  z-index: 20000;        /* 何より前 */
+  z-index: 20000;
   display:flex;
   align-items:flex-end;
   justify-content:center;
   padding: 10px;
 }
-
 .modal__backdrop{
-  position: fixed;       /* ←重要：全面を確実に覆う */
+  position: fixed;
   inset:0;
   background: rgba(0,0,0,.55);
 }
-
 .modal__panel{
   position: relative;
   width: min(640px, 100%);
@@ -135,13 +139,10 @@ html,body{
   border-top-right-radius: 18px;
   border: 1px solid rgba(255,255,255,.10);
   padding: 12px 14px 18px;
-
-  /* 画面内に収めてスクロール */
   max-height: 85vh;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
-
 .modal__header{
   display:flex;
   align-items:center;
@@ -168,27 +169,22 @@ textarea{
   flex-wrap: wrap;
 }
 
-/* 保存前プレビュー（縦写真で操作不能にならない） */
 .photoPreview{
   margin-top: 10px;
   border-radius: 12px;
   overflow: auto;
   border: 1px solid rgba(255,255,255,.10);
-
   max-height: 45vh;
   -webkit-overflow-scrolling: touch;
 }
-
 .photoPreview img{
   width:100%;
   display:block;
-  height: auto;
+  height:auto;
   max-height: 45vh;
   object-fit: contain;
   background: rgba(0,0,0,.25);
 }
-
-/* プレビュー上部に「選びなおし」「消す」を固定 */
 .photoPreview__top{
   position: sticky;
   top: 0;
@@ -202,20 +198,51 @@ textarea{
 
 .form__row{ margin-top: 14px; display:flex; gap: 10px; align-items:center; }
 .formError{ color: var(--danger); font-size: 12px; font-weight: 700; }
+.hint{ margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.4; }
 
-/* --- 駅名ラベル（常時表示 tooltip） --- */
-.stationLabel{
-  background: rgba(0,0,0,.55);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 10px;
-  padding: 3px 8px;
-  font-weight: 800;
-  font-size: 12px;
-  white-space: nowrap;
+/* --- SVG路線図の見た目 --- */
+.routeLine{
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .95;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.45));
 }
 
-/* Leaflet tooltipが変に前に出すぎないように調整（任意） */
-.leaflet-tooltip{
-  z-index: 5000;
+.stationNode{
+  cursor: pointer;
+}
+
+.stationOuter{
+  fill: rgba(0,0,0,.55);
+  stroke: rgba(255,255,255,.22);
+  stroke-width: 2;
+}
+
+.stationInner{
+  stroke-width: 3;
+}
+
+.stationLabel{
+  font-size: 14px;
+  font-weight: 900;
+  fill: rgba(232,238,252,.95);
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.45);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  cursor: pointer;
+}
+
+.stationCode{
+  font-size: 11px;
+  font-weight: 800;
+  fill: rgba(159,176,208,.95);
+  paint-order: stroke;
+  stroke: rgba(0,0,0,.45);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  cursor: pointer;
 }
