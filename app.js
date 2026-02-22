@@ -278,23 +278,22 @@ window.addEventListener("DOMContentLoaded", () => {
     // 交互にちょい左右（上段/下段の横並びの被り対策）
     const alt = (n % 2 === 0) ? 10 : -10;
 
-    // 上段（E-01〜E-04付近）：上へ
-    if (st.y === 420 && st.x >= 120) {
-      return {
-        nameDx: alt,
-        nameDy: -18,
-        codeDx: alt,
-        codeDy: -34,
-        anchor: "middle",
-      };
-    }
+if (st.y === 420 && st.x >= 120) {
+  return {
+    nameDx: 0,
+    nameDy: -18,
+    codeDx: 0,
+    codeDy: -34,
+    anchor: "middle",
+  };
+}
 
     // 下段（E-15〜E-18）：上へ
     if (st.y === 820 && st.x <= 240) {
       return {
         nameDx: alt,
         nameDy: -18,
-        codeDx: alt,
+        codeDx: 0,
         codeDy: -34,
         anchor: "middle",
       };
