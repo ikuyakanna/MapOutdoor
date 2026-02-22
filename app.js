@@ -395,33 +395,41 @@ function labelPlacement(lineId, st){
   }
 
   // ===== 丸ノ内線：被り回避（左右交互） =====
-  if (lineId === "marunouchi") {
-    // 縦の柱（M-01〜M-20）：左右交互に出す
-    if (/^M-(0[1-9]|1\d|20)$/.test(st.id)) {
-      // stations 配列の順番を使って交互にする（レイアウト変更にも強い）
-      const idx = stations.findIndex(x => x.id === st.id); // 0-based
-      const isLeft = idx % 2 === 0; // 0,2,4...を左に
-      return isLeft
-        ? { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" }
-        : { nameDx: 18,  nameDy: 5, codeDx: 18,  codeDy: 16, anchor: "start" };
-    }
+// ===== 丸ノ内線：被り回避（左右交互＋横は上下交互） =====
+if (lineId === "marunouchi") {
 
-// 横ライン（y=780付近）は「上/下」を交互にして被り回避
-if (/^M-(21|22|23|24|25|26|27|28)$/.test(st.id)) {
-  // 横並びの順番（左→右）
-  const order = ["M-25","M-24","M-23","M-22","M-21","M-20","M-26","M-27","M-28"];
-  const i = order.indexOf(st.id);
-
-  // 念のため：見つからない場合はデフォルト上
-  const isUp = (i === -1) ? true : (i % 2 === 0); // 偶数=上、奇数=下
-
-  if (isUp) {
-    return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
-  } else {
+  // ★ 中野坂上は必ず下表示（最優先ルール）
+  if (st.id === "M-20") {
     return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
   }
-}
+
+  // ===== 縦ライン（M-01〜M-19）左右交互 =====
+  if (/^M-(0[1-9]|1\d)$/.test(st.id)) {
+    const idx = stations.findIndex(x => x.id === st.id);
+    const isLeft = idx % 2 === 0;
+
+    return isLeft
+      ? { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" }
+      : { nameDx: 18, nameDy: 5, codeDx: 18, codeDy: 16, anchor: "start" };
   }
+
+  // ===== 横ライン（M-21〜M-28）上下交互（★上下を逆に）=====
+  if (/^M-(21|22|23|24|25|26|27|28)$/.test(st.id)) {
+
+    // 左→右の並び順
+    const order = ["M-25","M-24","M-23","M-22","M-21","M-26","M-27","M-28"];
+    const i = order.indexOf(st.id);
+
+    // ★ここを逆にした（奇数=上、偶数=下）
+    const isUp = i % 2 === 1;
+
+    if (isUp) {
+      return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+    } else {
+      return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
+    }
+  }
+}
 
   // ===== 共通ルール（デフォルト） =====
   // 上端（yが小さい）→下に出す
