@@ -291,7 +291,7 @@ if (st.y === 420 && st.x >= 120) {
     // 下段（E-15〜E-18）：上へ
     if (st.y === 820 && st.x <= 240) {
       return {
-        nameDx: alt,
+        nameDx: 0,
         nameDy: -18,
         codeDx: 0,
         codeDy: -34,
@@ -306,7 +306,7 @@ if (st.y === 420 && st.x >= 120) {
         nameDx: 18,
         nameDy: wobble,
         codeDx: 18,
-        codeDy: 16 + wobble,
+        codeDy: 16,
         anchor: "start",
       };
     }
@@ -318,7 +318,7 @@ if (st.y === 420 && st.x >= 120) {
         nameDx: -18,
         nameDy: wobble,
         codeDx: -18,
-        codeDy: 16 + wobble,
+        codeDy: 16,
         anchor: "end",
       };
     }
