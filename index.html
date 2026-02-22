@@ -45,21 +45,26 @@
   </main>
 
   <!-- 駅詳細シート -->
-  <section id="sheet" class="sheet hidden" aria-label="駅詳細">
-    <div class="sheet__header">
-      <div>
-        <div id="stationName" class="sheet__title">駅名</div>
-        <div id="stationStatus" class="sheet__sub">未達成</div>
-      </div>
-      <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
+<section id="sheet" class="sheet hidden" aria-label="駅詳細">
+  <!-- 固定ヘッダー -->
+  <div class="sheet__header">
+    <div>
+      <div id="stationName" class="sheet__title">駅名</div>
+      <div id="stationStatus" class="sheet__sub">未達成</div>
     </div>
+    <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
+  </div>
 
-    <div class="sheet__actions">
-      <button id="addProofBtn" class="btn btn--solid" type="button">証を追加</button>
-    </div>
+  <!-- 固定：アクション（証を追加） -->
+  <div class="sheet__actions">
+    <button id="addProofBtn" class="btn btn--solid" type="button">証を追加</button>
+  </div>
 
+  <!-- ★ここだけスクロール -->
+  <div class="sheet__body">
     <div id="proofList" class="proofList"></div>
-  </section>
+  </div>
+</section>
 
   <!-- 証追加モーダル -->
   <section id="modal" class="modal hidden" aria-label="証追加">

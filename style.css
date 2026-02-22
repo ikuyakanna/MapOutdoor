@@ -280,13 +280,25 @@ body{
   right: 0;
   bottom: 0;
   z-index: 2400;
+
   background: rgba(12,12,14,.96);
   border-top: 1px solid rgba(255,255,255,.10);
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
+
   padding: 14px;
+
+  /* 高さは固定（中だけスクロールさせるため） */
+  height: 70vh;
   max-height: 70vh;
-  overflow: auto;
+
+  /* シート自体はスクロールさせない */
+  overflow: hidden;
+
+  /* ヘッダー・アクション・ボディを固定レイアウトに */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .sheet__header{
   display:flex;
@@ -294,6 +306,15 @@ body{
   justify-content: space-between;
   gap: 10px;
 }
+/* ★スクロール領域 */
+.sheet__body{
+  flex: 1 1 auto;
+  min-height: 0; /* iPhoneでスクロールを効かせる必須条件 */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 10px;
+}
+
 .sheet__title{ font-weight: 900; font-size: 16px; }
 .sheet__sub{ color: var(--muted); font-size: 12px; margin-top: 4px; }
 .sheet__actions{ margin: 10px 0 12px; }
