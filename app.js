@@ -406,15 +406,21 @@ function labelPlacement(lineId, st){
         : { nameDx: 18,  nameDy: 5, codeDx: 18,  codeDy: 16, anchor: "start" };
     }
 
-    // 横ライン（y=780 付近）は上に出す（左右に分散しつつ）
-    // 左側（M-21〜M-25）
-    if (/^M-(21|22|23|24|25)$/.test(st.id)) {
-      return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
-    }
-    // 右側（支線 M-26〜M-28）も上に
-    if (/^M-(26|27|28)$/.test(st.id)) {
-      return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
-    }
+// 横ライン（y=780付近）は「上/下」を交互にして被り回避
+if (/^M-(21|22|23|24|25|26|27|28)$/.test(st.id)) {
+  // 横並びの順番（左→右）
+  const order = ["M-25","M-24","M-23","M-22","M-21","M-20","M-26","M-27","M-28"];
+  const i = order.indexOf(st.id);
+
+  // 念のため：見つからない場合はデフォルト上
+  const isUp = (i === -1) ? true : (i % 2 === 0); // 偶数=上、奇数=下
+
+  if (isUp) {
+    return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
+  } else {
+    return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
+  }
+}
   }
 
   // ===== 共通ルール（デフォルト） =====
