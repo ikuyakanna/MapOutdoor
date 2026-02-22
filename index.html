@@ -5,91 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>大江戸線 証アプリ（試作）</title>
 
-  <!-- Leaflet (map) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="title">大江戸線｜駅制覇（試作）</div>
-    <div class="subtitle">駅ピンをタップ → 証を残す（写真必須）</div>
-  </header>
 
-  <main class="main">
-    <div id="map"></div>
+<header class="topbar">
+  <div class="title">大江戸線｜駅制覇（試作）</div>
+  <div class="subtitle">駅ピンをタップ → 証を残す（写真必須）</div>
+</header>
 
-    <!-- Bottom sheet: station detail -->
-    <section id="sheet" class="sheet hidden" aria-hidden="true">
-      <div class="sheet__handle"></div>
+<main class="main">
+  <div id="map"></div>
 
-      <div class="sheet__header">
-        <div>
-          <div id="stationName" class="sheet__title">駅名</div>
-          <div id="stationStatus" class="sheet__status">未達成</div>
-        </div>
-        <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
+  <!-- 駅詳細シート -->
+  <section id="sheet" class="sheet hidden">
+    <div class="sheet__handle"></div>
+
+    <div class="sheet__header">
+      <div>
+        <div id="stationName" class="sheet__title"></div>
+        <div id="stationStatus" class="sheet__status"></div>
+      </div>
+      <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
+    </div>
+
+    <div class="sheet__actions">
+      <button id="addProofBtn" class="btn btn--primary" type="button">証を追加</button>
+    </div>
+
+    <div class="sheet__section">
+      <div class="sheet__sectionTitle">この駅の証</div>
+      <div id="proofList" class="proofList"></div>
+    </div>
+  </section>
+
+  <!-- 投稿モーダル -->
+  <div id="modal" class="modal hidden">
+    <div class="modal__backdrop"></div>
+
+    <div class="modal__panel">
+      <div class="modal__header">
+        <div class="modal__title">証を追加</div>
+        <button id="closeModalBtn" class="btn btn--ghost" type="button">閉じる</button>
       </div>
 
-      <div class="sheet__actions">
-        <button id="addProofBtn" class="btn btn--primary" type="button">証を追加（写真必須）</button>
-      </div>
+      <div class="form">
+        <label class="field">
+          <div class="field__label">写真（必須）</div>
 
-      <div class="sheet__section">
-        <div class="sheet__sectionTitle">この駅の証</div>
-        <div id="proofList" class="proofList"></div>
-      </div>
-    </section>
+          <div class="photoButtons">
+            <label class="btn btn--ghost">
+              📁 アルバム
+              <input id="photoInputFile" type="file" accept="image/*" hidden>
+            </label>
 
-    <!-- Modal: add proof -->
-    <div id="modal" class="modal hidden" aria-hidden="true">
-      <div class="modal__backdrop"></div>
+            <label class="btn btn--ghost">
+              📷 カメラ
+              <input id="photoInputCamera" type="file" accept="image/*" capture="environment" hidden>
+            </label>
+          </div>
 
-      <div class="modal__panel" role="dialog" aria-modal="true">
-        <div class="modal__header">
-          <div class="modal__title">証を追加</div>
-          <button id="closeModalBtn" class="btn btn--ghost" type="button">閉じる</button>
-        </div>
-
-        <div class="form">
-          <label class="field">
-            <div class="field__label">写真（必須）</div>
-
-            <div class="photoButtons">
-              <label class="btn btn--ghost">
-                📁 アルバムから選ぶ
-                <input id="photoInputFile" type="file" accept="image/*" hidden>
-              </label>
-
-              <label class="btn btn--ghost">
-                📷 カメラで撮る
-                <input id="photoInputCamera" type="file" accept="image/*" capture="environment" hidden>
-              </label>
+          <div id="photoPreviewWrap" class="photoPreview hidden">
+            <div class="photoPreview__top">
+              <button id="reselectBtn" class="btn btn--ghost" type="button">選びなおす</button>
+              <button id="clearPhotoBtn" class="btn btn--ghost" type="button">消す</button>
             </div>
-
-            <div id="photoPreview" class="photoPreview hidden"></div>
-          </label>
-
-          <label class="field">
-            <div class="field__label">コメント（任意）</div>
-            <textarea id="commentInput" rows="3" placeholder="例：ラーメン最高、など"></textarea>
-          </label>
-
-          <div class="form__row">
-            <button id="saveProofBtn" class="btn btn--primary" type="button">保存</button>
-            <div id="formError" class="formError hidden"></div>
+            <div id="photoPreviewInner"></div>
           </div>
+        </label>
 
-          <div class="hint">
-            ※ 試作なので保存先はこのブラウザ（localStorage）です。別PC/別ブラウザには引き継がれません。
-          </div>
+        <label class="field">
+          <div class="field__label">コメント</div>
+          <textarea id="commentInput" rows="3"></textarea>
+        </label>
+
+        <div class="form__row">
+          <button id="saveProofBtn" class="btn btn--primary" type="button">保存</button>
+          <div id="formError" class="formError hidden"></div>
         </div>
       </div>
     </div>
+  </div>
 
-  </main>
+</main>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

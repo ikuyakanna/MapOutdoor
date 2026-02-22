@@ -1,161 +1,139 @@
 :root{
   --bg:#0b0f17;
-  --panel:#121a29;
-  --panel2:#0f1623;
   --text:#e8eefc;
   --muted:#9fb0d0;
-  --accent:#b6007a; /* 大江戸線っぽいマゼンタ */
+  --accent:#b6007a;
   --danger:#ff4d4d;
   --ok:#39d98a;
 }
 
-*{ box-sizing:border-box; }
-html,body{ height:100%; margin:0; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif; background:var(--bg); color:var(--text); }
+html,body{
+  height:100%;
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
 .topbar{
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  background: linear-gradient(180deg, rgba(182,0,122,.18), rgba(0,0,0,0));
+  padding:12px;
+  border-bottom:1px solid rgba(255,255,255,.1);
 }
-.title{ font-weight: 700; font-size: 16px; }
-.subtitle{ font-size: 12px; color:var(--muted); margin-top:4px; }
 
 .main{
-  height: calc(100% - 56px);
-  position: relative;
-  z-index: 0;
+  height:calc(100% - 60px);
+  position:relative;
 }
 
 #map{
-  height: 100%;
-  width: 100%;
-  position: relative;
-  z-index: 1; /* 地図は下 */
+  height:100%;
+  width:100%;
+  z-index:1;
 }
 
 .btn{
-  border: none; border-radius: 10px;
-  padding: 10px 12px;
-  font-weight: 700;
-  cursor: pointer;
+  border:none;
+  border-radius:10px;
+  padding:10px;
+  font-weight:700;
+  cursor:pointer;
 }
-.btn--primary{ background: var(--accent); color: white; }
-.btn--ghost{ background: rgba(255,255,255,.08); color: var(--text); }
+
+.btn--primary{
+  background:var(--accent);
+  color:#fff;
+}
+
+.btn--ghost{
+  background:rgba(255,255,255,.08);
+  color:#fff;
+}
 
 .sheet{
-  position: absolute; left: 10px; right: 10px; bottom: 10px;
-  z-index: 10000; /* 地図より前 */
-  background: rgba(18,26,41,.96);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 16px;
-  padding: 10px 12px 14px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.5);
-  max-height: 60%;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  position:absolute;
+  left:10px;
+  right:10px;
+  bottom:10px;
+  background:#111;
+  border-radius:16px;
+  padding:12px;
+  z-index:10000;
+  max-height:60%;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
 }
 
-.hidden{ display:none !important; }
+.hidden{ display:none; }
 
-.sheet__handle{
-  width: 44px; height: 5px; border-radius: 99px;
-  background: rgba(255,255,255,.22);
-  margin: 2px auto 10px;
-}
-.sheet__header{
-  display:flex; align-items:center; justify-content:space-between;
-  gap: 10px;
-}
-.sheet__title{ font-size: 18px; font-weight: 800; }
-.sheet__status{ font-size: 12px; margin-top:2px; color: var(--muted); }
-.sheet__actions{ margin-top: 10px; }
-.sheet__section{ margin-top: 14px; }
-.sheet__sectionTitle{ font-weight: 800; margin-bottom: 10px; }
-
-.proofList{ display:flex; flex-direction: column; gap: 10px; }
 .proofCard{
-  background: rgba(15,22,35,.9);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  padding: 10px;
+  background:#1a1a1a;
+  border-radius:12px;
+  padding:10px;
+  margin-bottom:10px;
 }
-.proofMeta{ font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+
 .proofImg{
-  width: 100%;
-  border-radius: 10px;
-  display:block;
-  border: 1px solid rgba(255,255,255,.08);
-  max-height: 45vh;        /* 画面の45%まで */
-  object-fit: contain;     /* 見切れ防止 */
-  background: rgba(0,0,0,.25);
+  width:100%;
+  max-height:45vh;
+  object-fit:contain;
+  border-radius:8px;
 }
-.proofComment{ margin-top: 8px; font-size: 13px; line-height: 1.35; }
 
 .modal{
-  position: absolute; inset: 0;
-  z-index: 20000; /* シートよりさらに前 */
-  display:flex; align-items:flex-end; justify-content:center;
+  position:absolute;
+  inset:0;
+  z-index:20000;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
 }
 
 .modal__backdrop{
-  position:absolute; inset:0; background: rgba(0,0,0,.55);
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.6);
 }
 
 .modal__panel{
-  position: relative;
-  width: min(640px, 100%);
-  background: rgba(18,26,41,.98);
-  border-top-left-radius: 18px;
-  border-top-right-radius: 18px;
-  border: 1px solid rgba(255,255,255,.10);
-  padding: 12px 14px 18px;
-}
-
-.modal__header{ display:flex; align-items:center; justify-content:space-between; }
-.modal__title{ font-weight: 900; font-size: 16px; }
-
-.field{ display:block; margin-top: 12px; }
-.field__label{ font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-
-textarea{
-  width: 100%;
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-  padding: 10px;
+  background:#111;
+  width:100%;
+  max-height:85vh;
+  overflow:auto;
+  border-radius:20px 20px 0 0;
+  padding:16px;
+  -webkit-overflow-scrolling:touch;
 }
 
 .photoButtons{
   display:flex;
   gap:10px;
-  flex-wrap: wrap;
+  margin-bottom:10px;
 }
 
 .photoPreview{
-  margin-top: 10px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,.10);
+  max-height:45vh;
+  overflow:auto;
+  border-radius:10px;
 }
-.photoPreview img{ width:100%; display:block; }
 
-.form__row{ margin-top: 14px; display:flex; gap: 10px; align-items:center; }
-.formError{ color: var(--danger); font-size: 12px; font-weight: 700; }
-.hint{ margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.photoPreview img{
+  width:100%;
+  max-height:45vh;
+  object-fit:contain;
+}
 
-/* Leaflet tooltipが上に出すぎないように（任意） */
-.leaflet-tooltip{
-  z-index: 5000;
+.photoPreview__top{
+  position:sticky;
+  top:0;
+  background:#000;
+  display:flex;
+  gap:10px;
+  padding:6px;
 }
 
 .stationLabel{
-  background: rgba(0,0,0,.55);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 10px;
-  padding: 3px 8px;
-  font-weight: 800;
-  font-size: 12px;
+  background:rgba(0,0,0,.7);
+  padding:4px 8px;
+  border-radius:8px;
+  font-size:12px;
 }
