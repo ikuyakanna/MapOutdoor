@@ -7,10 +7,10 @@
   <title>路線 証アプリ（試作）</title>
   <link rel="stylesheet" href="./style.css" />
   <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="路線証">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="路線証">
 </head>
 <body>
 
@@ -50,26 +50,51 @@
   </main>
 
   <!-- 駅詳細シート -->
-<section id="sheet" class="sheet hidden" aria-label="駅詳細">
-  <!-- 固定ヘッダー -->
-  <div class="sheet__header">
-    <div>
-      <div id="stationName" class="sheet__title">駅名</div>
-      <div id="stationStatus" class="sheet__sub">未達成</div>
+  <section id="sheet" class="sheet hidden" aria-label="駅詳細">
+    <!-- 固定ヘッダー -->
+    <div class="sheet__header">
+      <div>
+        <div id="stationName" class="sheet__title">駅名</div>
+        <div id="stationStatus" class="sheet__sub">未達成</div>
+      </div>
+      <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
     </div>
-    <button id="closeSheetBtn" class="btn btn--ghost" type="button">閉じる</button>
-  </div>
 
-  <!-- 固定：アクション（証を追加） -->
-  <div class="sheet__actions">
-    <button id="addProofBtn" class="btn btn--solid" type="button">証を追加</button>
-  </div>
+    <!-- 固定：アクション（証を追加） -->
+    <div class="sheet__actions">
+      <button id="addProofBtn" class="btn btn--solid" type="button">証を追加</button>
+    </div>
 
-  <!-- ★ここだけスクロール -->
-  <div class="sheet__body">
-    <div id="proofList" class="proofList"></div>
-  </div>
-</section>
+    <!-- ★ここだけスクロール -->
+    <div class="sheet__body">
+
+      <!-- 一覧ビュー -->
+      <div id="proofListView" class="proofListView">
+        <div id="proofList" class="proofList"></div>
+      </div>
+
+      <!-- 詳細ビュー（画像を大きく） -->
+      <div id="proofDetailView" class="proofDetailView hidden" aria-label="証の詳細">
+        <div class="proofDetailHeader">
+          <button id="backToListBtn" class="btn btn--ghost" type="button">一覧へ</button>
+
+          <div class="proofDetailMeta">
+            <div id="proofDetailDate" class="proofDetailDate">--月--日</div>
+            <div id="proofDetailStars" class="proofDetailStars">☆☆☆☆☆</div>
+          </div>
+
+          <button id="deleteProofBtn" class="btn btn--ghost" type="button">削除</button>
+        </div>
+
+        <div class="proofDetailBody">
+          <img id="proofDetailImg" class="proofDetailImg" alt="証の写真">
+        </div>
+
+        <div id="proofDetailComment" class="proofDetailComment"></div>
+      </div>
+
+    </div>
+  </section>
 
   <!-- 証追加モーダル -->
   <section id="modal" class="modal hidden" aria-label="証追加">
@@ -82,10 +107,30 @@
       </div>
 
       <div class="modal__body">
+
+        <!-- コメント（1行） -->
+        <div class="row">
+          <div class="row__label">コメント</div>
+          <input id="commentInput" class="textInput" type="text" maxlength="60" placeholder="例：○○でご飯食べた！">
+        </div>
+
+        <!-- お気に入り度 -->
+        <div class="row">
+          <div class="row__label">お気に入り度</div>
+          <div class="starPicker" role="radiogroup" aria-label="お気に入り度">
+            <button class="starBtn" type="button" data-star="1" aria-label="1">★</button>
+            <button class="starBtn" type="button" data-star="2" aria-label="2">★</button>
+            <button class="starBtn" type="button" data-star="3" aria-label="3">★</button>
+            <button class="starBtn" type="button" data-star="4" aria-label="4">★</button>
+            <button class="starBtn" type="button" data-star="5" aria-label="5">★</button>
+            <div id="starPreview" class="starPreview">☆☆☆☆☆</div>
+          </div>
+        </div>
+
+        <!-- 写真（必須） -->
         <div class="row">
           <div class="row__label">写真（必須）</div>
 
-          <!-- ★ここを左右2ボタンに変更 -->
           <div class="row__controls row__controls--photo">
             <!-- 本体inputは隠す -->
             <input id="photoInputFile" class="fileInputHidden" type="file" accept="image/*" />
@@ -112,10 +157,6 @@
           <div id="photoPreviewInner" class="photoPreviewInner"></div>
         </div>
 
-        <div class="row">
-          <div class="row__label">コメント</div>
-          <textarea id="commentInput" class="textarea" rows="3" placeholder="例：○○でご飯食べた！"></textarea>
-        </div>
       </div>
 
       <div class="modal__footer">

@@ -5,7 +5,7 @@
 // - 未選択なら「路線図を選択してください」
 // - 路線行：路線名 + 達成率（達成駅数/全駅）
 // - 駅クリック → 詳細シート → 証追加（写真必須・削除可）
-// - 証の表示順：コメント → 写真 → 日付
+// - 証の表示：一覧（コメント＋日付＋★）→ タップで画像詳細表示
 // - 編集モード（PC用）：駅ドラッグ、グリッド表示/スナップ、配置JSONコピー/DL
 // - 編集は「路線ごと」に保存（layout_<lineId>_v1）
 // - iPhoneでは編集バーを親ごと完全非表示（編集機能も実質OFF）
@@ -145,6 +145,16 @@ window.addEventListener("DOMContentLoaded", () => {
   const closeSheetBtn = document.getElementById("closeSheetBtn");
   const addProofBtn = document.getElementById("addProofBtn");
 
+  // sheet views
+  const proofListView = document.getElementById("proofListView");
+  const proofDetailView = document.getElementById("proofDetailView");
+  const backToListBtn = document.getElementById("backToListBtn");
+  const deleteProofBtn = document.getElementById("deleteProofBtn");
+  const proofDetailImg = document.getElementById("proofDetailImg");
+  const proofDetailDate = document.getElementById("proofDetailDate");
+  const proofDetailStars = document.getElementById("proofDetailStars");
+  const proofDetailComment = document.getElementById("proofDetailComment");
+
   // modal
   const modal = document.getElementById("modal");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -160,6 +170,10 @@ window.addEventListener("DOMContentLoaded", () => {
   // photo buttons（左右）
   const pickPhotoBtn = document.getElementById("pickPhotoBtn");
   const takePhotoBtn = document.getElementById("takePhotoBtn");
+
+  // modal stars
+  const starButtons = Array.from(document.querySelectorAll(".starBtn"));
+  const starPreview = document.getElementById("starPreview");
 
   if (!svg) {
     alert("HTMLに #oedoSvg が見つかりません。");
@@ -205,6 +219,9 @@ window.addEventListener("DOMContentLoaded", () => {
   let proofs = [];
   let selectedStation = null;
 
+  // proof detail state
+  let selectedProofId = null;
+
   // editor state
   let editMode = false;
   let showGrid = false;
@@ -217,6 +234,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // photo source
   let lastPhotoSource = "file";
+
+  // modal state
+  let favorite = 0; // 0〜5
 
   // =========================
   // 7) Helpers
@@ -308,6 +328,17 @@ window.addEventListener("DOMContentLoaded", () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  function starsText(n){
+    const v = Math.max(0, Math.min(5, Number(n) || 0));
+    return "★".repeat(v) + "☆".repeat(5 - v);
+  }
+  function monthDayText(ts){
+    const d = new Date(ts);
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    return `${m}月${day}日`;
   }
 
   // =========================
@@ -601,6 +632,8 @@ window.addEventListener("DOMContentLoaded", () => {
     loadProofs(line.id);
 
     selectedStation = null;
+    selectedProofId = null;
+
     closeSheet();
     closeModal();
 
@@ -612,8 +645,55 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================
-  // 13) Sheet
+  // 13) Sheet（一覧↔詳細）
   // =========================
+  function showProofListView(){
+    proofDetailView?.classList.add("hidden");
+    proofListView?.classList.remove("hidden");
+    selectedProofId = null;
+  }
+
+  function openProofDetail(proof){
+    if (!proof) return;
+    selectedProofId = proof.id;
+
+    if (proofDetailImg) proofDetailImg.src = proof.photo;
+    if (proofDetailDate) proofDetailDate.textContent = monthDayText(proof.createdAt);
+    if (proofDetailStars) proofDetailStars.textContent = starsText(proof.favorite || 0);
+    if (proofDetailComment) {
+      const t = (proof.comment || "").trim();
+      proofDetailComment.textContent = t ? t : "（コメントなし）";
+    }
+
+    proofListView?.classList.add("hidden");
+    proofDetailView?.classList.remove("hidden");
+  }
+
+  backToListBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showProofListView();
+  });
+
+  deleteProofBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedProofId) return;
+    if (!selectedStation) return;
+    if (!confirm("この証を削除しますか？")) return;
+
+    proofs = proofs.filter(x => x.id !== selectedProofId);
+    saveProofs();
+
+    renderSvg();
+    renderProofs();
+    renderLineList();
+    showProofListView();
+
+    const c = countByStation(selectedStation.id);
+    stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
+  });
+
   function openSheet(station){
     if (!currentLine) return;
     selectedStation = station;
@@ -622,12 +702,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const c = countByStation(station.id);
     stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
 
+    showProofListView();
     renderProofs();
     sheet.classList.remove("hidden");
   }
 
   function closeSheet(){
     sheet.classList.add("hidden");
+    showProofListView();
   }
   closeSheetBtn?.addEventListener("click", closeSheet);
 
@@ -647,7 +729,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================
-  // 14) Proof list（表示順：コメント→写真→日付）
+  // 14) Proof list（一覧：コメント＋日付＋★）
   // =========================
   function renderProofs(){
     proofList.innerHTML = "";
@@ -666,52 +748,68 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     list.forEach((p) => {
-      const card = document.createElement("div");
-      card.className = "proofCard";
+      const row = document.createElement("div");
+      row.className = "proofRow";
 
-      const comment = document.createElement("div");
-      comment.style.marginTop = "2px";
-      comment.textContent = (p.comment || "").trim() ? p.comment : "（コメントなし）";
+      const left = document.createElement("div");
+      left.className = "proofRow__left";
 
-      const img = document.createElement("img");
-      img.className = "proofImg";
-      img.src = p.photo;
-      img.alt = "証の写真";
+      const title = document.createElement("div");
+      title.className = "proofRow__title";
+      const t = (p.comment || "").trim();
+      title.textContent = t ? t : "（コメントなし）";
 
-      const meta = document.createElement("div");
-      meta.style.color = "var(--muted)";
-      meta.style.fontSize = "12px";
-      meta.style.marginTop = "8px";
-      meta.textContent = new Date(p.createdAt).toLocaleString("ja-JP");
+      const sub = document.createElement("div");
+      sub.className = "proofRow__sub";
 
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "btn btn--ghost";
-      del.textContent = "削除";
-      del.style.marginTop = "10px";
+      const date = document.createElement("div");
+      date.className = "proofRow__date";
+      date.textContent = monthDayText(p.createdAt);
 
-      del.addEventListener("click", () => {
-        if (!confirm("この証を削除しますか？")) return;
+      const stars = document.createElement("div");
+      stars.className = "proofRow__stars";
+      stars.textContent = starsText(p.favorite || 0);
 
-        proofs = proofs.filter(x => x.id !== p.id);
-        saveProofs();
+      sub.append(date, stars);
+      left.append(title, sub);
 
-        renderSvg();
-        renderProofs();
-        renderLineList();
+      const chev = document.createElement("div");
+      chev.className = "proofRow__chev";
+      chev.textContent = "›";
 
-        const c = countByStation(selectedStation.id);
-        stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
+      row.append(left, chev);
+
+      row.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openProofDetail(p);
       });
 
-      card.append(comment, img, meta, del);
-      proofList.appendChild(card);
+      proofList.appendChild(row);
     });
   }
 
   // =========================
-  // 15) Modal
+  // 15) Modal（証追加：コメント→★→写真）
   // =========================
+  function setFavorite(n){
+    favorite = Math.max(0, Math.min(5, Number(n) || 0));
+    if (starPreview) starPreview.textContent = starsText(favorite);
+
+    starButtons.forEach(btn => {
+      const v = Number(btn.dataset.star || 0);
+      btn.classList.toggle("isOn", v <= favorite);
+    });
+  }
+
+  starButtons.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setFavorite(btn.dataset.star);
+    });
+  });
+
   function openModal(){
     if (editMode) {
       alert("編集モード中は証追加できません。OFFにしてください。");
@@ -732,6 +830,9 @@ window.addEventListener("DOMContentLoaded", () => {
     photoPreviewInner.innerHTML = "";
     commentInput.value = "";
     lastPhotoSource = "file";
+
+    // ★お気に入り度初期化
+    setFavorite(0);
 
     modal.classList.remove("hidden");
 
@@ -796,9 +897,11 @@ window.addEventListener("DOMContentLoaded", () => {
     photoPreviewInner.innerHTML = "";
   });
 
-  saveProofBtn?.addEventListener("click", () => {
+  // ★保存（e未定義バグを修正済み）
+  saveProofBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     const file = photoInputFile.files?.[0] || photoInputCamera.files?.[0];
     if (!file){
       alert("写真は必須です。アルバムかカメラで選んでください。");
@@ -811,13 +914,14 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (ev) => {
       proofs.push({
         id: `p_${Date.now()}_${Math.random().toString(16).slice(2)}`,
         stationId: selectedStation.id,
         createdAt: Date.now(),
-        photo: e.target.result,
-        comment: commentInput.value || "",
+        comment: (commentInput.value || "").trim(), // コメント
+        favorite: favorite || 0,                   // お気に入り度
+        photo: ev.target.result,                   // 写真
       });
 
       saveProofs();
@@ -829,6 +933,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const c = countByStation(selectedStation.id);
       stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
+
+      // 保存後は一覧へ
+      showProofListView();
     };
     reader.readAsDataURL(file);
   });

@@ -319,7 +319,7 @@ body{
 .sheet__sub{ color: var(--muted); font-size: 12px; margin-top: 4px; }
 .sheet__actions{ margin: 10px 0 12px; }
 
-.proofList{ display: grid; gap: 12px; padding-bottom: 10px; }
+/* 旧：画像カード用（残してもOK） */
 .proofCard{
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.04);
@@ -439,26 +439,11 @@ body{
 }
 .row__controls{ display:flex; gap: 10px; flex-wrap: wrap; }
 
-/* コメント欄（常に見えるように固定＝縮まない） */
-#commentInput{
-  flex: 0 0 auto;
-}
-
-/* もし「写真選択/撮影」ボタンを使っている場合の並び（任意） */
-.photoPickRow{
-  display: flex;
-  gap: 10px;
-}
-.photoPickRow .btn{
-  flex: 1 1 0;
-  border-radius: 14px;
-  padding: 11px 12px;
-}
 .fileInputHidden{
   display:none;
 }
 
-/* textarea */
+/* textarea（旧。残してもOK） */
 .textarea{
   width: 100%;
   padding: 10px 12px;
@@ -506,4 +491,145 @@ body{
   height: auto;
   border-radius: 12px;
   display:block;
+}
+
+/* ===== Text input (1行コメント) ===== */
+.textInput{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  color: var(--text);
+  outline: none;
+}
+
+/* ===== Proof list rows ===== */
+.proofList{
+  display: grid;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+.proofRow{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+}
+.proofRow:active{ transform: translateY(1px); }
+
+.proofRow__left{
+  display:flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.proofRow__title{
+  font-weight: 900;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.proofRow__sub{
+  font-size: 12px;
+  color: rgba(255,255,255,.70);
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+.proofRow__date{ color: rgba(255,255,255,.78); }
+.proofRow__stars{ letter-spacing: .06em; }
+
+.proofRow__chev{
+  color: rgba(255,255,255,.55);
+  font-size: 18px;
+}
+
+/* ===== Star picker ===== */
+.starPicker{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.starBtn{
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.85);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.starBtn.isOn{
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.10);
+}
+.starPreview{
+  margin-left: 6px;
+  color: rgba(255,255,255,.85);
+  letter-spacing: .08em;
+  font-weight: 900;
+}
+
+/* ===== Proof detail view (full image) ===== */
+.proofDetailView{
+  height: 100%;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.proofDetailHeader{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.proofDetailMeta{
+  display:flex;
+  flex-direction: column;
+  align-items:center;
+  gap: 2px;
+  min-width: 110px;
+}
+.proofDetailDate{
+  font-size: 12px;
+  color: rgba(255,255,255,.70);
+}
+.proofDetailStars{
+  font-size: 14px;
+  letter-spacing: .08em;
+  font-weight: 900;
+}
+
+.proofDetailBody{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.proofDetailImg{
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* 画面いっぱいに見せる */
+  display:block;
+}
+
+.proofDetailComment{
+  font-size: 13px;
+  color: rgba(255,255,255,.86);
+  padding: 2px 4px;
+  min-height: 18px;
 }
