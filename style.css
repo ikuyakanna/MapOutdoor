@@ -612,3 +612,29 @@ body{
   padding: 2px 4px;
   min-height: 18px;
 }
+
+/* ===== iPhone PWA: ステータスバー被り対策 ===== */
+:root{
+  --safeTop: env(safe-area-inset-top, 0px);
+  --safeBottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 左上ハンバーガーを下に逃がす */
+.menuButton{
+  top: calc(10px + var(--safeTop));
+}
+
+/* PC用編集バー（iPhoneは非表示だが保険） */
+.editorBar{
+  top: calc(10px + var(--safeTop));
+}
+
+/* サイドメニューの中身も上に潜らないように */
+.sideMenu{
+  padding-top: calc(14px + var(--safeTop));
+}
+
+/* メインのコンテンツも少し下げておく（好みで） */
+.main{
+  padding-top: calc(64px + var(--safeTop));
+}
