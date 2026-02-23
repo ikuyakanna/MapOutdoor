@@ -288,14 +288,11 @@ body{
 
   padding: 14px;
 
-  /* 高さは固定（中だけスクロールさせるため） */
   height: 70vh;
   max-height: 70vh;
 
-  /* シート自体はスクロールさせない */
   overflow: hidden;
 
-  /* ヘッダー・アクション・ボディを固定レイアウトに */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -306,10 +303,9 @@ body{
   justify-content: space-between;
   gap: 10px;
 }
-/* ★スクロール領域 */
 .sheet__body{
   flex: 1 1 auto;
-  min-height: 0; /* iPhoneでスクロールを効かせる必須条件 */
+  min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 10px;
@@ -319,33 +315,16 @@ body{
 .sheet__sub{ color: var(--muted); font-size: 12px; margin-top: 4px; }
 .sheet__actions{ margin: 10px 0 12px; }
 
-/* 旧：画像カード用（残してもOK） */
-.proofCard{
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.04);
-  border-radius: 16px;
-  padding: 12px;
-}
-.proofImg{
-  width: 100%;
-  height: auto;
-  display:block;
-  border-radius: 12px;
-  margin-top: 10px;
-}
-
 /* ===== Modal ===== */
 .modal{
   position: fixed;
   inset: 0;
-  z-index: 2450;
+  z-index: 3000; /* ★重要：overlay(2650)/sideMenu(2700)より前へ */
 
-  /* bottom sheet */
   display: flex;
   align-items: flex-end;
   justify-content: center;
 
-  /* 上20%を空ける */
   padding-top: 20vh;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -360,12 +339,8 @@ body{
 .modal__panel{
   position: relative;
   width: min(520px, calc(100vw - 24px));
-
-  /* 下80%固定 */
   height: 80vh;
   max-height: 80vh;
-
-  /* パネル自体はスクロールさせない */
   overflow: hidden;
 
   background: linear-gradient(180deg, rgba(18,18,22,.96) 0%, rgba(10,10,12,.96) 100%);
@@ -373,13 +348,11 @@ body{
   border-radius: 18px;
   box-shadow: 0 18px 60px rgba(0,0,0,.55);
 
-  /* ヘッダー/ボディ/フッター固定レイアウト */
   display: flex;
   flex-direction: column;
   z-index: 1;
 }
 
-/* モーダル上部の薄いアクセントライン（路線色） */
 .modal__panel::before{
   content:"";
   position:absolute;
@@ -411,7 +384,6 @@ body{
 }
 .modal__title{ font-weight: 900; letter-spacing: .02em; }
 
-/* ボディは残り領域。ここはスクロールさせない */
 .modal__body{
   padding: 12px;
   flex: 1 1 auto;
@@ -439,18 +411,29 @@ body{
 }
 .row__controls{ display:flex; gap: 10px; flex-wrap: wrap; }
 
-.fileInputHidden{
-  display:none;
-}
+.fileInputHidden{ display:none; }
 
-/* textarea（旧。残してもOK） */
-.textarea{
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 14px;
+/* ===== 写真ボタン（見た目） ===== */
+.photoBtn{
   border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 11px 12px;
   background: rgba(255,255,255,.05);
-  color: var(--text);
+  color: rgba(255,255,255,.92);
+  cursor: pointer;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.photoBtn:active{ transform: translateY(1px); }
+.photoBtn--primary{
+  border: 1px solid rgba(64,156,255,.55);
+  background: rgba(64,156,255,.22);
+  font-weight: 900;
+}
+.row__controls--photo .photoBtn{
+  flex: 1 1 0;
 }
 
 /* ===== 写真プレビュー：スクロールは“写真だけ” ===== */
@@ -460,7 +443,6 @@ body{
   border-radius: 16px;
   padding: 10px;
 
-  /* 余った高さを使う（写真エリアが伸びる） */
   flex: 1 1 auto;
   min-height: 0;
 
@@ -472,12 +454,9 @@ body{
   display:flex;
   gap: 10px;
   margin-bottom: 10px;
-
-  /* ここは固定（スクロールしない） */
   flex: 0 0 auto;
 }
 
-/* ★ここだけスクロール */
 .photoPreviewInner{
   flex: 1 1 auto;
   min-height: 0;
@@ -485,7 +464,6 @@ body{
   -webkit-overflow-scrolling: touch;
   padding-bottom: 6px;
 }
-
 .photoPreviewInner img{
   width: 100%;
   height: auto;
@@ -568,6 +546,7 @@ body{
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+.starBtn:active{ transform: translateY(1px); }
 .starBtn.isOn{
   border-color: rgba(255,255,255,.22);
   background: rgba(255,255,255,.10);
@@ -623,7 +602,7 @@ body{
 .proofDetailImg{
   width: 100%;
   height: 100%;
-  object-fit: contain; /* 画面いっぱいに見せる */
+  object-fit: contain;
   display:block;
 }
 

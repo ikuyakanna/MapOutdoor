@@ -4,7 +4,7 @@
 // - 画面外タップで閉じる
 // - 未選択なら「路線図を選択してください」
 // - 路線行：路線名 + 達成率（達成駅数/全駅）
-// - 駅クリック → 詳細シート → 証追加（写真必須・削除可）
+// - 駅クリック → 詳細シート → 証追加（写真必須）
 // - 証の表示：一覧（コメント＋日付＋★）→ タップで画像詳細表示
 // - 編集モード（PC用）：駅ドラッグ、グリッド表示/スナップ、配置JSONコピー/DL
 // - 編集は「路線ごと」に保存（layout_<lineId>_v1）
@@ -12,8 +12,11 @@
 // - 大江戸線の支線：E-01(新宿西口) → E-28(都庁前)
 // - 大江戸線の例外：E-18 築地市場は駅名を左に出す
 // - 大江戸線：E-37/E-38（練馬春日町/光が丘）は左
-// - 丸ノ内線：縦は左右交互、横は上下交互（上下を逆に）＋中野坂上(M-20)は下固定
+// - 丸ノ内線：縦は左右交互、横は上下交互（上下を逆）＋中野坂上(M-20)は下固定
 // - 駅詳細シート表示中：駅以外（線/背景）タップで閉じる
+//
+// ★重要修正：モーダルはoverlayより前面（CSS z-index 3000）
+// ★重要修正：openModal()でcloseMenu()してoverlayを消す
 
 window.addEventListener("DOMContentLoaded", () => {
   // =========================
@@ -29,7 +32,7 @@ window.addEventListener("DOMContentLoaded", () => {
     {
       id: "oedo",
       name: "都営大江戸線",
-      color: "#b6007a", // マゼンタ寄せ
+      color: "#b6007a",
       stations: [
         { id:"E-01", code:"E-01", name:"新宿西口", x:140, y:420 },
         { id:"E-02", code:"E-02", name:"東新宿", x:200, y:420 },
@@ -167,7 +170,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const commentInput = document.getElementById("commentInput");
   const saveProofBtn = document.getElementById("saveProofBtn");
 
-  // photo buttons（左右）
+  // photo buttons
   const pickPhotoBtn = document.getElementById("pickPhotoBtn");
   const takePhotoBtn = document.getElementById("takePhotoBtn");
 
@@ -212,7 +215,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================
-  // 6) State（路線切り替え用）
+  // 6) State
   // =========================
   let currentLine = null;
   let stations = [];
@@ -420,12 +423,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     if (lineId === "marunouchi") {
-      // 中野坂上は必ず下
       if (st.id === "M-20") {
         return { nameDx: 2, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
       }
 
-      // 縦ライン（M-01〜M-19）：左右交互
       if (/^M-(0[1-9]|1\d)$/.test(st.id)) {
         const idx = stations.findIndex(x => x.id === st.id);
         const isLeft = idx % 2 === 0;
@@ -434,11 +435,10 @@ window.addEventListener("DOMContentLoaded", () => {
           : { nameDx: 18,  nameDy: 5, codeDx: 18,  codeDy: 16, anchor: "start" };
       }
 
-      // 横ライン（M-21〜M-28）：上下交互（上下を逆）
       if (/^M-(21|22|23|24|25|26|27|28)$/.test(st.id)) {
         const order = ["M-25","M-24","M-23","M-22","M-21","M-26","M-27","M-28"];
         const i = order.indexOf(st.id);
-        const isUp = (i === -1) ? true : (i % 2 === 1); // 逆：奇数=上、偶数=下
+        const isUp = (i === -1) ? true : (i % 2 === 1);
 
         if (isUp) return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
         return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
@@ -555,7 +555,6 @@ window.addEventListener("DOMContentLoaded", () => {
         startDrag(s, evt);
       };
 
-      // ★重要：ここで stopPropagation して「駅以外タップで閉じる」に伝播させない
       const onClick = (evt) => {
         evt.stopPropagation();
         if (!currentLine) return;
@@ -696,6 +695,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function openSheet(station){
     if (!currentLine) return;
+
+    // ★誤タップ防止：駅を開いたらメニューを閉じる
+    closeMenu();
+
     selectedStation = station;
 
     stationName.textContent = `${station.name}（${station.code}）`;
@@ -713,18 +716,14 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   closeSheetBtn?.addEventListener("click", closeSheet);
 
-  // シート内タップは伝播させない（保険）
   sheet?.addEventListener("click", (e) => e.stopPropagation());
 
-  // ★駅詳細シート表示中：駅以外（線/背景）タップで閉じる
   svg.addEventListener("click", (e) => {
     if (sheet.classList.contains("hidden")) return;
     if (!currentLine) return;
 
-    // 駅（g.stationNode）をタップした場合は閉じない
     if (e.target.closest && e.target.closest(".stationNode")) return;
 
-    // 駅名/駅番号は onClick 側で stopPropagation しているので、ここには来ない想定
     closeSheet();
   });
 
@@ -831,12 +830,13 @@ window.addEventListener("DOMContentLoaded", () => {
     commentInput.value = "";
     lastPhotoSource = "file";
 
-    // ★お気に入り度初期化
     setFavorite(0);
+
+    // ★重要：モーダルを開く前にメニューを閉じてoverlayを消す
+    closeMenu();
 
     modal.classList.remove("hidden");
 
-    // モーダル中はハンバーガーを隠す
     if (menuButton) menuButton.style.display = "none";
   }
 
@@ -897,7 +897,6 @@ window.addEventListener("DOMContentLoaded", () => {
     photoPreviewInner.innerHTML = "";
   });
 
-  // ★保存（e未定義バグを修正済み）
   saveProofBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -919,9 +918,9 @@ window.addEventListener("DOMContentLoaded", () => {
         id: `p_${Date.now()}_${Math.random().toString(16).slice(2)}`,
         stationId: selectedStation.id,
         createdAt: Date.now(),
-        comment: (commentInput.value || "").trim(), // コメント
-        favorite: favorite || 0,                   // お気に入り度
-        photo: ev.target.result,                   // 写真
+        comment: (commentInput.value || "").trim(),
+        favorite: favorite || 0,
+        photo: ev.target.result,
       });
 
       saveProofs();
@@ -934,7 +933,6 @@ window.addEventListener("DOMContentLoaded", () => {
       const c = countByStation(selectedStation.id);
       stationStatus.textContent = c > 0 ? `達成（${c}件）` : "未達成";
 
-      // 保存後は一覧へ
       showProofListView();
     };
     reader.readAsDataURL(file);
