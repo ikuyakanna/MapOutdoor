@@ -76,15 +76,18 @@
       <!-- 詳細ビュー（画像を大きく） -->
       <div id="proofDetailView" class="proofDetailView hidden" aria-label="証の詳細">
         <div class="proofDetailHeader">
-          <button id="backToListBtn" class="btn btn--ghost" type="button">一覧へ</button>
+  <button id="backToListBtn" class="btn btn--ghost" type="button">一覧へ</button>
 
-          <div class="proofDetailMeta">
-            <div id="proofDetailDate" class="proofDetailDate">--月--日</div>
-            <div id="proofDetailStars" class="proofDetailStars">☆☆☆☆☆</div>
-          </div>
+  <div class="proofDetailMeta">
+    <div id="proofDetailDate" class="proofDetailDate">--月--日</div>
+    <div id="proofDetailStars" class="proofDetailStars">☆☆☆☆☆</div>
+  </div>
 
-          <button id="deleteProofBtn" class="btn btn--ghost" type="button">削除</button>
-        </div>
+  <div style="display:flex; gap:8px;">
+    <button id="editProofBtn" class="btn btn--ghost" type="button">修正</button>
+    <button id="deleteProofBtn" class="btn btn--ghost" type="button">削除</button>
+  </div>
+</div>
 
         <div class="proofDetailBody">
           <img id="proofDetailImg" class="proofDetailImg" alt="証の写真">
@@ -107,12 +110,11 @@
       </div>
 
       <div class="modal__body">
-
-        <!-- コメント（1行） -->
-        <div class="row">
-          <div class="row__label">コメント</div>
-          <input id="commentInput" class="textInput" type="text" maxlength="60" placeholder="例：○○でご飯食べた！">
-        </div>
+        <!-- コメント（1行） → タイトル（必須） -->
+<div class="row">
+  <div class="row__label">タイトル（必須）</div>
+  <input id="titleInput" class="textInput" type="text" maxlength="60" placeholder="例：○○でご飯！">
+</div>
 
         <!-- お気に入り度 -->
         <div class="row">

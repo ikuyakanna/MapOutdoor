@@ -1,33 +1,14 @@
 // 路線 証アプリ（SVG簡易路線図 + 複数路線 + 編集モード）
-// - 外部APIなし（無料運用向き）
-// - 左上ハンバーガー → 路線一覧（起動時は開いた状態）
-// - 画面外タップで閉じる
-// - 未選択なら「路線図を選択してください」
-// - 路線行：路線名 + 達成率（達成駅数/全駅）
-// - 駅クリック → 詳細シート → 証追加（写真必須）
-// - 証の表示：一覧（コメント＋日付＋★）→ タップで画像詳細表示
-// - 編集モード（PC用）：駅ドラッグ、グリッド表示/スナップ、配置JSONコピー/DL
-// - 編集は「路線ごと」に保存（layout_<lineId>_v1）
-// - iPhoneでは編集バーを親ごと完全非表示（編集機能も実質OFF）
-// - 大江戸線の支線：E-01(新宿西口) → E-28(都庁前)
-// - 大江戸線の例外：E-18 築地市場は駅名を左に出す
-// - 大江戸線：E-37/E-38（練馬春日町/光が丘）は左
-// - 丸ノ内線：縦は左右交互、横は上下交互（上下を逆）＋中野坂上(M-20)は下固定
-// - 駅詳細シート表示中：駅以外（線/背景）タップで閉じる
-//
-// ★重要修正：モーダルはoverlayより前面（CSS z-index 3000）
-// ★重要修正：openModal()でcloseMenu()してoverlayを消す
+// - 証の表示：一覧（タイトル＋日付＋★）→ タップで画像詳細表示
+// - 証追加：タイトル必須、写真必須、★選択
+// - 証修正：タイトル/★/写真を編集（写真未選択なら既存を保持）
+// - ★重要：モーダルはoverlayより前面（CSS z-index 3000）
+// - ★重要：openModal()でcloseMenu()してoverlayを消す
 
 window.addEventListener("DOMContentLoaded", () => {
-  // =========================
-  // 0) Canvas size
-  // =========================
   const SVG_W = 390;
   const SVG_H = 844;
 
-  // =========================
-  // 1) Lines（ここに増やしていく）
-  // =========================
   const lines = [
     {
       id: "oedo",
@@ -113,25 +94,18 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   ];
 
-  // =========================
-  // 2) Storage keys（路線ごと）
-  // =========================
   const proofKey = (lineId) => `proofs_${lineId}_v1`;
   const layoutKey = (lineId) => `layout_${lineId}_v1`;
 
-  // =========================
-  // 3) DOM
-  // =========================
+  // DOM
   const svg = document.getElementById("oedoSvg");
   const emptyState = document.getElementById("emptyState");
 
-  // menu
   const menuButton = document.getElementById("menuButton");
   const sideMenu = document.getElementById("sideMenu");
   const overlay = document.getElementById("overlay");
   const lineList = document.getElementById("lineList");
 
-  // editor bar
   const editorBar = document.getElementById("editorBar");
   const toggleEditBtn = document.getElementById("toggleEditBtn");
   const copyJsonBtn = document.getElementById("copyJsonBtn");
@@ -140,7 +114,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const gridToggle = document.getElementById("gridToggle");
   const snapToggle = document.getElementById("snapToggle");
 
-  // sheet
   const sheet = document.getElementById("sheet");
   const stationName = document.getElementById("stationName");
   const stationStatus = document.getElementById("stationStatus");
@@ -148,17 +121,16 @@ window.addEventListener("DOMContentLoaded", () => {
   const closeSheetBtn = document.getElementById("closeSheetBtn");
   const addProofBtn = document.getElementById("addProofBtn");
 
-  // sheet views
   const proofListView = document.getElementById("proofListView");
   const proofDetailView = document.getElementById("proofDetailView");
   const backToListBtn = document.getElementById("backToListBtn");
+  const editProofBtn = document.getElementById("editProofBtn");
   const deleteProofBtn = document.getElementById("deleteProofBtn");
   const proofDetailImg = document.getElementById("proofDetailImg");
   const proofDetailDate = document.getElementById("proofDetailDate");
   const proofDetailStars = document.getElementById("proofDetailStars");
-  const proofDetailComment = document.getElementById("proofDetailComment");
+  const proofDetailComment = document.getElementById("proofDetailComment"); // 表示名は気にしない（タイトルを出す）
 
-  // modal
   const modal = document.getElementById("modal");
   const closeModalBtn = document.getElementById("closeModalBtn");
   const photoInputFile = document.getElementById("photoInputFile");
@@ -167,14 +139,12 @@ window.addEventListener("DOMContentLoaded", () => {
   const photoPreviewInner = document.getElementById("photoPreviewInner");
   const reselectBtn = document.getElementById("reselectBtn");
   const clearPhotoBtn = document.getElementById("clearPhotoBtn");
-  const commentInput = document.getElementById("commentInput");
+  const titleInput = document.getElementById("titleInput"); // ★変更
   const saveProofBtn = document.getElementById("saveProofBtn");
 
-  // photo buttons
   const pickPhotoBtn = document.getElementById("pickPhotoBtn");
   const takePhotoBtn = document.getElementById("takePhotoBtn");
 
-  // modal stars
   const starButtons = Array.from(document.querySelectorAll(".starBtn"));
   const starPreview = document.getElementById("starPreview");
 
@@ -183,17 +153,13 @@ window.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // =========================
-  // 4) iPhone判定：編集UI完全非表示
-  // =========================
+  // iPhone判定：編集UI完全非表示
   const isIPhone = /iPhone|iPod/i.test(navigator.userAgent);
   if (isIPhone) {
     if (editorBar) editorBar.style.display = "none";
   }
 
-  // =========================
-  // 5) Menu open/close
-  // =========================
+  // Menu open/close
   function openMenu(){
     sideMenu?.classList.add("open");
     overlay?.classList.add("show");
@@ -209,23 +175,17 @@ window.addEventListener("DOMContentLoaded", () => {
     if (sideMenu.classList.contains("open")) closeMenu();
     else openMenu();
   });
+  overlay?.addEventListener("click", closeMenu);
 
-  overlay?.addEventListener("click", () => {
-    closeMenu();
-  });
-
-  // =========================
-  // 6) State
-  // =========================
+  // State
   let currentLine = null;
   let stations = [];
   let proofs = [];
   let selectedStation = null;
 
-  // proof detail state
   let selectedProofId = null;
 
-  // editor state
+  // 編集モード
   let editMode = false;
   let showGrid = false;
   let snapToGrid = true;
@@ -239,19 +199,19 @@ window.addEventListener("DOMContentLoaded", () => {
   let lastPhotoSource = "file";
 
   // modal state
-  let favorite = 0; // 0〜5
+  let favorite = 0;
 
-  // =========================
-  // 7) Helpers
-  // =========================
+  // 修正モード用
+  let editingProofId = null;
+  let editingKeepPhotoDataUrl = null; // 既存写真保持
+
+  // Helpers
   function elNS(name){
     return document.createElementNS("http://www.w3.org/2000/svg", name);
   }
-
   function setLineColor(color){
     document.documentElement.style.setProperty("--line", color);
   }
-
   function loadProofs(lineId){
     proofs = JSON.parse(localStorage.getItem(proofKey(lineId)) || "[]");
   }
@@ -297,11 +257,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function stationsExportJson(){
     const arr = stations.map(s => ({
-      id: s.id,
-      code: s.code,
-      name: s.name,
-      x: Math.round(s.x),
-      y: Math.round(s.y),
+      id: s.id, code: s.code, name: s.name, x: Math.round(s.x), y: Math.round(s.y),
     }));
     return JSON.stringify(arr, null, 2);
   }
@@ -344,14 +300,9 @@ window.addEventListener("DOMContentLoaded", () => {
     return `${m}月${day}日`;
   }
 
-  // =========================
-  // 8) Edit mode / dragging
-  // =========================
   function setEditMode(on){
     editMode = on;
-
     if (toggleEditBtn) toggleEditBtn.textContent = `編集モード：${editMode ? "ON" : "OFF"}`;
-
     if (editorHint) {
       editorHint.textContent = editMode
         ? "ON：駅をドラッグで移動。グリッド/スナップも可。終わったら「配置JSONをコピー」"
@@ -372,11 +323,7 @@ window.addEventListener("DOMContentLoaded", () => {
   function startDrag(station, evt){
     movedDuringDrag = false;
     const { x, y } = svgPointFromClient(evt.clientX, evt.clientY);
-    dragging = {
-      station,
-      dx: station.x - x,
-      dy: station.y - y,
-    };
+    dragging = { station, dx: station.x - x, dy: station.y - y };
   }
 
   function moveDrag(evt){
@@ -384,7 +331,6 @@ window.addEventListener("DOMContentLoaded", () => {
     evt.preventDefault();
 
     const { x, y } = svgPointFromClient(evt.clientX, evt.clientY);
-
     let newX = x + dragging.dx;
     let newY = y + dragging.dy;
 
@@ -411,9 +357,7 @@ window.addEventListener("DOMContentLoaded", () => {
   svg.addEventListener("pointermove", moveDrag, { passive: false });
   window.addEventListener("pointerup", endDrag);
 
-  // =========================
-  // 9) ラベル配置
-  // =========================
+  // ラベル配置
   function labelPlacement(lineId, st){
     if (lineId === "oedo" && st.id === "E-18") {
       return { nameDx: -18, nameDy: 5, codeDx: -18, codeDy: 16, anchor: "end" };
@@ -439,7 +383,6 @@ window.addEventListener("DOMContentLoaded", () => {
         const order = ["M-25","M-24","M-23","M-22","M-21","M-26","M-27","M-28"];
         const i = order.indexOf(st.id);
         const isUp = (i === -1) ? true : (i % 2 === 1);
-
         if (isUp) return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
         return { nameDx: 0, nameDy: 22, codeDx: 0, codeDy: 38, anchor: "middle" };
       }
@@ -457,9 +400,7 @@ window.addEventListener("DOMContentLoaded", () => {
     return { nameDx: 0, nameDy: -18, codeDx: 0, codeDy: -34, anchor: "middle" };
   }
 
-  // =========================
-  // 10) Render
-  // =========================
+  // Render
   function renderGrid(){
     if (!(editMode && showGrid)) return;
 
@@ -472,7 +413,6 @@ window.addEventListener("DOMContentLoaded", () => {
       line.setAttribute("class", x % GRID_BOLD === 0 ? "gridBold" : "gridLine");
       svg.appendChild(line);
     }
-
     for (let y = 0; y <= SVG_H; y += GRID_SIZE) {
       const line = elNS("line");
       line.setAttribute("x1", 0);
@@ -487,7 +427,6 @@ window.addEventListener("DOMContentLoaded", () => {
   function renderSvg(){
     svg.innerHTML = "";
     renderGrid();
-
     if (!currentLine) return;
 
     const pts = stations.map(s => `${s.x},${s.y}`).join(" ");
@@ -578,12 +517,9 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // =========================
-  // 11) Line list
-  // =========================
+  // Line list
   function renderLineList(){
     lineList.innerHTML = "";
-
     lines.forEach((line) => {
       const done = visitedStationCount(line);
       const total = line.stations.length;
@@ -600,7 +536,6 @@ window.addEventListener("DOMContentLoaded", () => {
       right.textContent = `${done}/${total}`;
 
       row.append(left, right);
-
       row.addEventListener("click", () => {
         selectLine(line.id);
         closeMenu();
@@ -610,15 +545,8 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // =========================
-  // 12) Line select
-  // =========================
-  function showEmpty(){
-    emptyState?.classList.remove("hidden");
-  }
-  function hideEmpty(){
-    emptyState?.classList.add("hidden");
-  }
+  function showEmpty(){ emptyState?.classList.remove("hidden"); }
+  function hideEmpty(){ emptyState?.classList.add("hidden"); }
 
   function selectLine(lineId){
     const line = lines.find(l => l.id === lineId);
@@ -643,9 +571,7 @@ window.addEventListener("DOMContentLoaded", () => {
     renderLineList();
   }
 
-  // =========================
-  // 13) Sheet（一覧↔詳細）
-  // =========================
+  // Sheet（一覧↔詳細）
   function showProofListView(){
     proofDetailView?.classList.add("hidden");
     proofListView?.classList.remove("hidden");
@@ -659,9 +585,11 @@ window.addEventListener("DOMContentLoaded", () => {
     if (proofDetailImg) proofDetailImg.src = proof.photo;
     if (proofDetailDate) proofDetailDate.textContent = monthDayText(proof.createdAt);
     if (proofDetailStars) proofDetailStars.textContent = starsText(proof.favorite || 0);
+
+    // 表示は「タイトル」
     if (proofDetailComment) {
-      const t = (proof.comment || "").trim();
-      proofDetailComment.textContent = t ? t : "（コメントなし）";
+      const t = (proof.title || "").trim();
+      proofDetailComment.textContent = t ? t : "（タイトルなし）";
     }
 
     proofListView?.classList.add("hidden");
@@ -672,6 +600,18 @@ window.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     e.stopPropagation();
     showProofListView();
+  });
+
+  // 修正ボタン：モーダルを編集モードで開く
+  editProofBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedProofId) return;
+
+    const p = proofs.find(x => x.id === selectedProofId);
+    if (!p) return;
+
+    openModalForEdit(p);
   });
 
   deleteProofBtn?.addEventListener("click", (e) => {
@@ -696,7 +636,6 @@ window.addEventListener("DOMContentLoaded", () => {
   function openSheet(station){
     if (!currentLine) return;
 
-    // ★誤タップ防止：駅を開いたらメニューを閉じる
     closeMenu();
 
     selectedStation = station;
@@ -715,21 +654,16 @@ window.addEventListener("DOMContentLoaded", () => {
     showProofListView();
   }
   closeSheetBtn?.addEventListener("click", closeSheet);
-
   sheet?.addEventListener("click", (e) => e.stopPropagation());
 
   svg.addEventListener("click", (e) => {
     if (sheet.classList.contains("hidden")) return;
     if (!currentLine) return;
-
     if (e.target.closest && e.target.closest(".stationNode")) return;
-
     closeSheet();
   });
 
-  // =========================
-  // 14) Proof list（一覧：コメント＋日付＋★）
-  // =========================
+  // Proof list（一覧：タイトル＋日付＋★）
   function renderProofs(){
     proofList.innerHTML = "";
 
@@ -755,8 +689,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const title = document.createElement("div");
       title.className = "proofRow__title";
-      const t = (p.comment || "").trim();
-      title.textContent = t ? t : "（コメントなし）";
+      const t = (p.title || "").trim();
+      title.textContent = t ? t : "（タイトルなし）";
 
       const sub = document.createElement("div");
       sub.className = "proofRow__sub";
@@ -788,9 +722,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // =========================
-  // 15) Modal（証追加：コメント→★→写真）
-  // =========================
+  // Modal（証追加/修正）
   function setFavorite(n){
     favorite = Math.max(0, Math.min(5, Number(n) || 0));
     if (starPreview) starPreview.textContent = starsText(favorite);
@@ -809,7 +741,20 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  function openModal(){
+  function resetModalCommon(){
+    photoInputFile.value = "";
+    photoInputCamera.value = "";
+    photoPreviewWrap.classList.add("hidden");
+    photoPreviewInner.innerHTML = "";
+    if (titleInput) titleInput.value = "";
+    lastPhotoSource = "file";
+    setFavorite(0);
+
+    editingProofId = null;
+    editingKeepPhotoDataUrl = null;
+  }
+
+  function openModalNew(){
     if (editMode) {
       alert("編集モード中は証追加できません。OFFにしてください。");
       return;
@@ -823,20 +768,32 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    photoInputFile.value = "";
-    photoInputCamera.value = "";
-    photoPreviewWrap.classList.add("hidden");
-    photoPreviewInner.innerHTML = "";
-    commentInput.value = "";
-    lastPhotoSource = "file";
-
-    setFavorite(0);
-
-    // ★重要：モーダルを開く前にメニューを閉じてoverlayを消す
+    resetModalCommon();
     closeMenu();
 
     modal.classList.remove("hidden");
+    if (menuButton) menuButton.style.display = "none";
+  }
 
+  function openModalForEdit(proof){
+    if (!proof) return;
+
+    resetModalCommon();
+
+    // 編集モード設定
+    editingProofId = proof.id;
+    editingKeepPhotoDataUrl = proof.photo;
+
+    // 既存値を反映
+    if (titleInput) titleInput.value = (proof.title || "").trim();
+    setFavorite(proof.favorite || 0);
+
+    // プレビューも出しておく（保持されることが分かる）
+    photoPreviewInner.innerHTML = `<img src="${proof.photo}" alt="プレビュー">`;
+    photoPreviewWrap.classList.remove("hidden");
+
+    closeMenu();
+    modal.classList.remove("hidden");
     if (menuButton) menuButton.style.display = "none";
   }
 
@@ -848,7 +805,7 @@ window.addEventListener("DOMContentLoaded", () => {
   addProofBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    openModal();
+    openModalNew();
   });
 
   closeModalBtn?.addEventListener("click", closeModal);
@@ -895,33 +852,66 @@ window.addEventListener("DOMContentLoaded", () => {
     photoInputCamera.value = "";
     photoPreviewWrap.classList.add("hidden");
     photoPreviewInner.innerHTML = "";
+
+    // 編集中にクリアしたら「写真も未設定扱い」にする（＝保存時に必須判定が働く）
+    editingKeepPhotoDataUrl = null;
   });
 
+  // 保存（新規 or 修正）
   saveProofBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const file = photoInputFile.files?.[0] || photoInputCamera.files?.[0];
-    if (!file){
-      alert("写真は必須です。アルバムかカメラで選んでください。");
+    const title = (titleInput?.value || "").trim();
+    if (!title) {
+      alert("タイトルは必須です。入力してください。");
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024){
+    const pickedFile = photoInputFile.files?.[0] || photoInputCamera.files?.[0];
+    const isEdit = !!editingProofId;
+
+    // 新規は写真必須
+    // 修正は写真未選択なら既存保持（editingKeepPhotoDataUrl）
+    if (!pickedFile && !isEdit) {
+      alert("写真は必須です。アルバムかカメラで選んでください。");
+      return;
+    }
+    if (!pickedFile && isEdit && !editingKeepPhotoDataUrl) {
+      alert("写真がありません。写真を選んでください。");
+      return;
+    }
+
+    // ファイルがある時だけサイズ制限
+    if (pickedFile && pickedFile.size > 3 * 1024 * 1024){
       alert("写真サイズが大きすぎます（3MB以下推奨）。");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      proofs.push({
-        id: `p_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-        stationId: selectedStation.id,
-        createdAt: Date.now(),
-        comment: (commentInput.value || "").trim(),
-        favorite: favorite || 0,
-        photo: ev.target.result,
-      });
+    const finalize = (photoDataUrl) => {
+      if (!currentLine || !selectedStation) return;
+
+      if (isEdit) {
+        const idx = proofs.findIndex(p => p.id === editingProofId);
+        if (idx === -1) return;
+
+        proofs[idx] = {
+          ...proofs[idx],
+          title,
+          favorite: favorite || 0,
+          photo: photoDataUrl, // 置換 or 保持
+          updatedAt: Date.now(),
+        };
+      } else {
+        proofs.push({
+          id: `p_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          stationId: selectedStation.id,
+          createdAt: Date.now(),
+          title,
+          favorite: favorite || 0,
+          photo: photoDataUrl,
+        });
+      }
 
       saveProofs();
       closeModal();
@@ -935,12 +925,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
       showProofListView();
     };
-    reader.readAsDataURL(file);
+
+    if (!pickedFile) {
+      // 修正：写真未選択 → 既存保持
+      finalize(editingKeepPhotoDataUrl);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => finalize(ev.target.result);
+    reader.readAsDataURL(pickedFile);
   });
 
-  // =========================
-  // 16) Editor bar actions（PCのみ）
-  // =========================
+  // Editor bar（PCのみ）
   setEditMode(false);
 
   if (gridToggle) gridToggle.checked = false;
@@ -991,9 +988,7 @@ window.addEventListener("DOMContentLoaded", () => {
     snapToGrid = true;
   }
 
-  // =========================
-  // 17) Initial
-  // =========================
+  // 初期表示
   renderLineList();
   showEmpty();
   openMenu();
